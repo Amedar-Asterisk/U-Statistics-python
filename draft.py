@@ -1,5 +1,5 @@
 import numpy as np
-from computable_sequence import ComputableSequence
+from sum_path import ComputableSequence
 
 
 #####
@@ -123,3 +123,56 @@ def V_statisitics(matrix_list: list, computing_sequence: ComputableSequence):
 
         ### check if there are pairs with single same index
         # such as (1, 2) and (1, 3) or (1, 2) and (3, 1)
+
+
+    def standardize_indexes(lst):
+    """
+    Standardize the index list to continuous integer indexes.
+
+    Args:
+        lst (list): List of index pairs. Each pair is a list of some integers.
+
+    Returns:
+        tuple: Standardized index list and mapping from standardized to original indexes.
+    """
+    num_to_index = {}
+    standardized_lst = []
+    standardized_to_original = {}
+    current_index = 0
+    for t in lst:
+        standardized_pair = []
+        for num in t:
+            if num not in num_to_index:
+                num_to_index[num] = current_index
+                standardized_to_original[current_index] = num
+                current_index += 1
+            standardized_pair.append(num_to_index[num])
+        standardized_lst.append(standardized_pair)
+
+    return standardized_lst, standardized_to_original
+
+
+def compute_format(index_list: list):
+    """
+    Compute the format string for np.einsum and the result index pair list.
+
+    Args:
+        index_list (list): List of index pairs.
+
+    Returns:
+        tuple: einsum format string and result index pair list.
+    """
+    normalized_indexes, normalizing_mapping = standardize_indexes(index_list)
+    ab_index_map = {AB_list[i]: j for i, j in normalizing_mapping.items()}
+
+    sum_parts = []
+    all_letters = set()
+
+    for pair in normalized_indexes:
+        current_str = "".join(AB_list[k] for k in pair)
+        sum_parts.append(current_str)
+        for k in pair:
+            all_letters.add(AB_list[k])
+    result_format = "".join(sorted(all_letters))
+    compute_format = "->".join([",".join(sum_parts), result_format])
+    return compute_format, tuple([ab_index_map[letter] for letter in result_format])
