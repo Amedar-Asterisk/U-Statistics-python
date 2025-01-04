@@ -1,6 +1,7 @@
 ### some useful functions
 from collections import defaultdict
-import string
+import string, re
+import numpy as np
 
 AB_talbe = list(string.ascii_lowercase)
 
@@ -100,6 +101,25 @@ def strings2format(lhs_lst: list, rhs: str) -> str:
     return "->".join([",".join(lhs_lst), rhs])
 
 
-if __name__ == "__main__":
-    print(numbers_to_letters([1, 2, 3]))
-    print(numbers_to_letters([[1, 2], [3, 4]]))
+def analyze_path(compute_format: str, optimize=False, tensor_dim=10):
+    lhs, result = compute_format.split("->")
+    lhs_lst = lhs.split(",")
+    compute_format = strings2format(lhs_lst, result)
+    ndim_lst = [len(pair) for pair in lhs_lst]
+    tensor_list = [np.random.rand(*(tensor_dim,) * ndim) for ndim in ndim_lst]
+    path_info = np.einsum_path(compute_format, *tensor_list, optimize=optimize)[1]
+    naive_flop_match = re.search(r"Naive FLOP count:\s*([\d\.]+e[+-]?\d*)", path_info)
+    optimized_flop_match = re.search(
+        r"Optimized FLOP count:\s*([\d\.]+e[+-]?\d*)", path_info
+    )
+    largest_intermediate_match = re.search(
+        r"Largest intermediate:\s*([\d\.]+e[+-]?\d*)", path_info
+    )
+
+    naive_flop = naive_flop_match.group(1) if naive_flop_match else None
+    optimized_flop = optimized_flop_match.group(1) if optimized_flop_match else None
+    largest_intermediate = (
+        largest_intermediate_match.group(1) if largest_intermediate_match else None
+    )
+
+    return float(naive_flop), float(optimized_flop), float(largest_intermediate)
