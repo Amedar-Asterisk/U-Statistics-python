@@ -161,15 +161,20 @@ class SumPath:
                 index: self.eval_result_length(index) for index in self.indexes
             }
             self.length_indicator = reverse_mapping(index_length)
-        return (
-            len(
-                set(
-                    "".join(self.pair(position))
-                    for position in self.index_table.locations(index)
+        else:
+            return (
+                len(
+                    set(
+                        "".join(
+                            [
+                                self.pair(position)
+                                for position in self.index_table.locations(index)
+                            ]
+                        )
+                    )
                 )
+                - 1
             )
-            - 1
-        )
 
     def next_contract(self):
         self.eval_result_length()
