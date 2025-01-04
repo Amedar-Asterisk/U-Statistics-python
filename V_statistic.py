@@ -1,29 +1,52 @@
 import numpy as np
-import string
+import warnings
 from sum_path import SumPath
-from utils import standardize_indexes, numbers_to_letters, AB_talbe
+from utils import standardize_indexes, numbers_to_letters, strings2format
 
 
-def Vindexes2compute_group(Vindexes: list[int]) -> list[int]:
+def Vindexes2pairs(Vindexes: list[int], order=2) -> list[int]:
     compute_sequence = standardize_indexes(
-        [[Vindexes[i], Vindexes[i + 1]] for i in range(0, len(Vindexes) - 1)]
+        [
+            [Vindexes[i + j] for j in range(order)]
+            for i in range(len(Vindexes) - order + 1)
+        ]
     )[0]
     return compute_sequence
+
+
+def V_format(Vindexes: list[int] | int, order=2) -> list[str]:
+    if isinstance(Vindexes, int):
+        Vindexes = list(range(Vindexes))
+    compute_sequence = Vindexes2pairs(Vindexes, order)
+    return numbers_to_letters(compute_sequence)
 
 
 def Tensor_sum(
     tensor_list: list | dict,
     compute_list: list | SumPath,
+    summor="numpy",
     init=True,
     compute_formats=False,
 ):
     if init:
+        if isinstance(summor, str):
+            if summor == "numpy":
+                summor = np.einsum
+            elif summor == "torch":
+                try:
+                    import torch
+
+                    summor = torch.einsum
+                except ImportError:
+                    warnings.warn("torch is not imported, using numpy.einsum.")
+                    summor = np.einsum
+            else:
+                raise ValueError("summor must be 'numpy' or 'torch'.")
         tensor_list = {k: tensor_list[k] for k in range(len(tensor_list))}
         compute_list = SumPath(compute_list)
         dedup_compute = compute_list.dedup_pair()
         for indice, compute_format in dedup_compute.items():
-            tensor_list[indice] = np.einsum(compute_format, tensor_list[indice])
-        compute_list.eval()
+            tensor_list[indice] = summor(compute_format, tensor_list[indice])
         if compute_formats:
             compute_formats = []
             compute_formats.append(str(compute_list))
@@ -32,77 +55,61 @@ def Tensor_sum(
         compute_format = "->".join([compute_list.pair(0), ""])
         if compute_formats:
             compute_formats.append(compute_format)
-            return np.einsum(compute_format, tensor_list[0]), compute_formats
-        return np.einsum(compute_format, tensor_list[0])
+            return summor(compute_format, tensor_list[0]), compute_formats
+        return summor(compute_format, tensor_list[0])
     else:
-        contract_index = max(
-            compute_list.indexes, key=lambda x: compute_list.indicator[x]
-        )
+        contract_index = compute_list.next_contract()
         contract_indices, save_position, contract_compute = compute_list.contract(
             contract_index
         )
         if compute_formats:
             compute_formats.append(contract_compute)
-        tensor_list[save_position] = np.einsum(
+        tensor_list[save_position] = summor(
             contract_compute, *[tensor_list[i] for i in contract_indices]
         )
         contract_indices.remove(save_position)
         for indice in contract_indices:
             tensor_list.pop(indice)
         return Tensor_sum(
-            tensor_list, compute_list, False, compute_formats=compute_formats
+            tensor_list,
+            compute_list,
+            summor=summor,
+            init=False,
+            compute_formats=compute_formats,
         )
 
 
 def V_statistic(
     tensor_list: list[np.ndarray],
-    compute_group: list[int] = None,
+    V_sequence: list[int] = None,
     compute_formats=False,
 ):
-    if compute_group is None:
-        compute_group = list(range(order=len(tensor_list) + tensor_list[0].ndim - 1))
-    compute_sequence = Vindexes2compute_group(compute_group)
-    compute_list = numbers_to_letters(compute_sequence)
+    if V_sequence is None:
+        V_sequence = range(len(tensor_list) + tensor_list[0].ndim - 1)
+    order = tensor_list[0].ndim
+    compute_list = V_format(V_sequence, order)
     return Tensor_sum(tensor_list, compute_list, compute_formats=compute_formats)
 
 
-# Test
-if __name__ == "__main__":
-    np.random.seed(123)
-    n = 40
-    m = 6
-    A = np.random.rand(n, n)
-    tensor_list = []
-    for _ in range(m):
-        tensor_list.append(A)
-
-    compute_list = ["ab", "ac", "ad", "bc", "bd", "cd"]
-    import time
-
-    def method1(tensor_list, compute_list):
-        return Tensor_sum(tensor_list, compute_list)
-
-    def method2(tensor_list):
-        return np.einsum("ab,ac,ad,bc,bd,cd->", *tensor_list)
-
-    # 测试次数
-    n_tests = 100
-
-    # 测试第一种方法
-    start_time = time.time()
-    for _ in range(n_tests):
-        result1 = method1(tensor_list, compute_list)
-    time1 = (time.time() - start_time) / n_tests
-
-    # 测试第二种方法
-    start_time = time.time()
-    for _ in range(n_tests):
-        result2 = method2(tensor_list)
-    time2 = (time.time() - start_time) / n_tests
-
-    print(f"方法1 (Tensor_sum) 平均执行时间: {time1:.6f} 秒")
-    print(f"方法2 (einsum) 平均执行时间: {time2:.6f} 秒")
-    print(f"速度比例 (method1/method2): {time1/time2:.2f}")
-
-    # 验证结果是否相同
-    print(f"\n结果是否相同: {np.allclose(result1, result2)}")
+def V_stats_torch(
+    tensor_list: list[np.ndarray],
+    V_sequence: list[int] = None,
+):
+    try:
+        import torch
+    except ImportError:
+        raise ImportError("torch is not imported.")
+    if V_sequence is None:
+        V_sequence = range(len(tensor_list) + tensor_list[0].ndim - 1)
+    order = tensor_list[0].ndim
+    compute_list = V_format(V_sequence, order)
+    compute_format = strings2format(compute_list, "")
+    try:
+        import opt_einsum
+    except ImportError:
+        warnings.warn(
+            "opt_einsum is not imported. will contract from left to right (default order)."
+        )
+    return torch.einsum(
+        compute_format, *[torch.from_numpy(tensor) for tensor in tensor_list]
+    )

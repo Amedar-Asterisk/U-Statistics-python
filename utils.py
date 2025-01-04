@@ -8,19 +8,19 @@ AB_talbe = list(string.ascii_lowercase)
 # A decorator that can make a single argument of a single value function support list
 def support_list(func):
     def wrapper(
-        lst_args=False,
+        is_lst_args=False,
         *args,
     ):
-        if not lst_args:
+        if not is_lst_args:
             return func(*args)
         else:
-            return [func(*args) for args in lst_args]
+            return [func(*args) for args in is_lst_args]
 
     return wrapper
 
 
 # This function is to generate the reverse mapping of a dictionary
-def reverse_mapping(mapping):
+def reverse_mapping(mapping: dict) -> dict:
     reverse = defaultdict(list)
     for key, value in mapping.items():
         reverse[value].append(key)
@@ -28,7 +28,7 @@ def reverse_mapping(mapping):
 
 
 # This functio is to standardize the indexes to continuous integer indexes
-def standardize_indexes(lst):
+def standardize_indexes(lst: list) -> tuple:
     """
     Standardize the index list to continuous integer indexes.
 
@@ -94,6 +94,10 @@ def dedup(strings: str | list) -> str:
         return "".join(dict.fromkeys(combined_string))
     else:
         raise TypeError("Input must be a string or a list of strings.")
+
+
+def strings2format(lhs_lst: list, rhs: str) -> str:
+    return "->".join([",".join(lhs_lst), rhs])
 
 
 if __name__ == "__main__":

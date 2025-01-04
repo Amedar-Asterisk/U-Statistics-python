@@ -1,16 +1,14 @@
 import numpy as np
 import string
-from utils import reverse_mapping, support_list, dedup
+from utils import reverse_mapping, support_list, dedup, strings2format
 from typing import List, Tuple
 
 AB_list = list(string.ascii_lowercase)
 
 
 class index_table:
-    def __init__(self, evl_times: bool = False):
+    def __init__(self):
         self._p_dict = {}
-        if evl_times:
-            self._t_dict = {}
 
     @property
     def indexes(self):
@@ -28,8 +26,6 @@ class index_table:
         else:
             if location not in self._p_dict[index]:
                 self._p_dict[index].append(location)
-        if hasattr(self, "_t_dict"):
-            self._eval_times()
 
     def remove(self, index: str, location: int):
         """remove an index from the table
@@ -42,21 +38,9 @@ class index_table:
                 self._p_dict[index].remove(location)
                 if len(self._p_dict[index]) == 0:
                     self._p_dict.pop(index)
-        if hasattr(self, "._t_dict"):
-            self._eval_times()
-
-    def times(self, index: str | list = None):
-        return (
-            len(self._p_dict[index])
-            if index is not None
-            else [len(self._p_dict[i]) for i in self._p_dict]
-        )
 
     def locations(self, index: str):
         return self._p_dict[index]
-
-    def _eval_times(self):
-        self._t_dict = reverse_mapping({i: len(self._p_dict[i]) for i in self._p_dict})
 
 
 class SumPath:
@@ -79,19 +63,15 @@ class SumPath:
         return len(self._pair_list)
 
     def __str__(self):
-        return "->".join([",".join([self._pair_list[i] for i in range(len(self))]), ""])
+        return strings2format(self._pair_list.values())
 
     @property
     def pair_sequence(self):
-        return self._pair_list.copy()
+        return list(self._pair_list.values()).copy()
 
     @property
     def index_table(self):
         return self._index_table
-
-    @property
-    def times_list(self):
-        return sorted(self._index_table.times())
 
     @property
     def indexes(self) -> list[str]:
@@ -102,6 +82,9 @@ class SumPath:
 
     def pair(self, position: int) -> str:
         return self._pair_list[position]
+
+    def times(self, index: str):
+        return len(self.index_table.locations(index))
 
     @support_list
     def remove(self, pair_position: int):
@@ -147,16 +130,11 @@ class SumPath:
         result = dedup([self.pair(position) for position in compute_positions]).replace(
             index, ""
         )
-
-        compute_format = "->".join(
-            [
-                ",".join([self.pair(position) for position in compute_positions]),
-                result,
-            ]
+        compute_format = strings2format(
+            [self.pair(position) for position in compute_positions], result
         )
         save_position = self.replace(compute_positions, result)
-        if hasattr(self, "indicator") and len(self) > 0:
-            self.eval()
+
         return compute_positions, save_position, compute_format
 
     def eval_repeatability(self, index: str):
@@ -173,12 +151,30 @@ class SumPath:
                     for position in self.index_table.locations(index)
                 )
             )
-            - self.index_table.times(index)
+            - self.times(index)
             + 1
         )
 
-    def eval(self, eval_func: callable = eval_repeatability):
-        self.indicator = {}
-        for index in self.indexes:
-            self.indicator[index] = eval_func(self, index)
-        return self.indicator
+    def eval_result_length(self, index: str = None):
+        if index is None:
+            index_length = {
+                index: self.eval_result_length(index) for index in self.indexes
+            }
+            self.length_indicator = reverse_mapping(index_length)
+        return (
+            len(
+                set(
+                    "".join(self.pair(position))
+                    for position in self.index_table.locations(index)
+                )
+            )
+            - 1
+        )
+
+    def next_contract(self):
+        self.eval_result_length()
+        indexes_min_length = self.length_indicator[min(self.length_indicator)]
+        if len(indexes_min_length) == 1:
+            return indexes_min_length[0]
+        else:
+            return min(indexes_min_length, key=lambda x: self.times(x))
