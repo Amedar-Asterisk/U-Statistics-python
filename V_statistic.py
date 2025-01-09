@@ -4,7 +4,7 @@ from sum_path import SumPath
 from utils import standardize_indexes, numbers_to_letters, strings2format
 
 
-def Vindexes2pairs(Vindexes: list[int], order=2) -> list[int]:
+def indexes2pairs(Vindexes: list[int], order=2) -> list[int]:
     compute_sequence = standardize_indexes(
         [
             [Vindexes[i + j] for j in range(order)]
@@ -14,10 +14,10 @@ def Vindexes2pairs(Vindexes: list[int], order=2) -> list[int]:
     return compute_sequence
 
 
-def V_format(Vindexes: list[int] | int, order=2) -> list[str]:
+def indexes2strlst(Vindexes: list[int] | int, order=2) -> list[str]:
     if isinstance(Vindexes, int):
         Vindexes = list(range(Vindexes))
-    compute_sequence = Vindexes2pairs(Vindexes, order)
+    compute_sequence = indexes2pairs(Vindexes, order)
     return numbers_to_letters(compute_sequence)
 
 
@@ -91,7 +91,7 @@ def V_statistic(
     if V_sequence is None:
         V_sequence = range(len(tensor_list) + tensor_list[0].ndim - 1)
     order = tensor_list[0].ndim
-    compute_list = V_format(V_sequence, order)
+    compute_list = indexes2strlst(V_sequence, order)
     return Tensor_sum(tensor_list, compute_list, compute_formats=compute_formats)
 
 
@@ -106,7 +106,7 @@ def V_stats_torch(
     if V_sequence is None:
         V_sequence = range(len(tensor_list) + tensor_list[0].ndim - 1)
     order = tensor_list[0].ndim
-    compute_list = V_format(V_sequence, order)
+    compute_list = indexes2strlst(V_sequence, order)
     compute_format = strings2format(compute_list, "")
     try:
         import opt_einsum

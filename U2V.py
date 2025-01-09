@@ -90,12 +90,25 @@ def encode_partition(partition: List[Set[int]]) -> List[int]:
         >>> encode_partition([{0, 1, 2}, {3}])
         [0, 0, 0, 3]
     """
+    # Create a mapping from each number to the minimum value of its subset
+    num_to_min = {}
+    for subset in partition:
+        min_val = min(subset)
+        for num in subset:
+            num_to_min[num] = min_val
+
+    # Determine the maximum number to know the size of the encoded list
+    max_num = max(num_to_min.keys(), default=-1)
+
+    # Build the encoded list
     encoded = []
-    for num in range(len(partition)):
-        for subset in partition:
-            if num in subset:
-                encoded.append(min(subset))
-                break
+    for num in range(max_num + 1):
+        if num in num_to_min:
+            encoded.append(num_to_min[num])
+        else:
+            # Handle numbers not in any subset (if necessary)
+            encoded.append(-1)  # or raise an error, depending on requirements
+
     return encoded
 
 
@@ -105,12 +118,3 @@ def partition_weights(partition: List[Set[int]]) -> int:
     sign = (-1) ** (sum(len_lst) - num_partitions)
     value = np.prod([factorial(n - 1) for n in len_lst])
     return sign * value
-
-
-if __name__ == "__main__":
-    m = 3
-
-    for k in range(1, m + 1):
-        print(f"Partitioning {m} elements into {k} subsets:")
-        for p in partition(m, k):
-            print(p, partition_weights(p))
