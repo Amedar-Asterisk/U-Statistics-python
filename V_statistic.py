@@ -44,6 +44,10 @@ def Tensor_sum(
                 raise ValueError("summor must be 'numpy' or 'torch'.")
         tensor_list = {k: tensor_list[k] for k in range(len(tensor_list))}
         compute_list = SumPath(compute_list)
+        if len(tensor_list) != len(compute_list):
+            raise ValueError(
+                "The number of tensors and the number of compute formats do not match."
+            )
         dedup_compute = compute_list.dedup_pair()
         for indice, compute_format in dedup_compute.items():
             tensor_list[indice] = summor(compute_format, tensor_list[indice])

@@ -97,17 +97,27 @@ def dedup(strings: str | list) -> str:
         raise TypeError("Input must be a string or a list of strings.")
 
 
-def strings2format(lhs_lst: list, rhs: str) -> str:
+def strings2format(lhs_lst: list, rhs: str = None) -> str:
+    if rhs is None:
+        rhs = ""
     return "->".join([",".join(lhs_lst), rhs])
 
 
-def analyze_path(compute_format: str, optimize=False, tensor_dim=10):
+def analyze_path(compute_format: str, optimize=False, tensor_dim=10, path_func=None):
+    if path_func is None:
+        path_func = np.einsum_path
+    elif path_func == "oe" or path_func == "opt_einsum":
+        import opt_einsum
+
+        path_func = opt_einsum.contract_path
+    else:
+        raise ValueError("Invalid path evaluate function.")
     lhs, result = compute_format.split("->")
     lhs_lst = lhs.split(",")
     compute_format = strings2format(lhs_lst, result)
     ndim_lst = [len(pair) for pair in lhs_lst]
     tensor_list = [np.random.rand(*(tensor_dim,) * ndim) for ndim in ndim_lst]
-    path_info = np.einsum_path(compute_format, *tensor_list, optimize=optimize)[1]
+    path_info = str(path_func(compute_format, *tensor_list, optimize=optimize)[1])
     naive_flop_match = re.search(r"Naive FLOP count:\s*([\d\.]+e[+-]?\d*)", path_info)
     optimized_flop_match = re.search(
         r"Optimized FLOP count:\s*([\d\.]+e[+-]?\d*)", path_info

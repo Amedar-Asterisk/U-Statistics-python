@@ -176,3 +176,68 @@ def compute_format(index_list: list):
     result_format = "".join(sorted(all_letters))
     compute_format = "->".join([",".join(sum_parts), result_format])
     return compute_format, tuple([ab_index_map[letter] for letter in result_format])
+
+
+
+
+from itertools import combinations
+
+
+def generate_sequences(l, k):
+    """
+    Generate all possible sequences by partitioning a list according to specified partition sizes.
+
+    Args:
+        l (list): Input list to be partitioned
+        k (list): List of integers representing partition sizes. Each number k[i]
+                 represents the size of the i-th partition.
+
+    Returns:
+        list: List of all possible sequences after partitioning
+
+    Example:
+        >>> l = [1, 2, 3, 4]
+        >>> k = [2, 2]
+        >>> generate_sequences(l, k)
+        [[1, 1, 2, 2], [1, 1, 3, 3], [1, 1, 4, 4], ...]
+    """
+
+    def helper(sequence, k_list):
+        """
+        Recursive helper function to generate partitioned sequences.
+
+        Args:
+            sequence (list): Current sequence being processed
+            k_list (list): Remaining partition sizes to process
+
+        Returns:
+            list: List of possible sequences for current partition
+        """
+        # Base case: if no more partitions needed, return current sequence
+        if not k_list:
+            return [sequence]
+
+        k1 = k_list[0]  # Get current partition size
+        remaining_k = k_list[1:]  # Get remaining partition sizes
+        results = []
+
+        # Generate all possible combinations for current partition size
+        for indices in combinations(range(len(sequence)), k1):
+            new_sequence = sequence.copy()
+            # Replace elements at selected indices with first element
+            for index in indices[1:]:
+                new_sequence[index] = new_sequence[indices[0]]
+            # Get remaining elements not in current partition
+            remaining_elements = [
+                new_sequence[i] for i in range(len(new_sequence)) if i not in indices
+            ]
+            # Recursively process remaining elements with remaining partition sizes
+            for result in helper(remaining_elements, remaining_k):
+                # Insert partitioned elements back at their original positions
+                for i, index in enumerate(indices):
+                    result.insert(index, new_sequence[indices[0]])
+                results.append(result)
+
+        return results
+
+    return helper(l, k)
