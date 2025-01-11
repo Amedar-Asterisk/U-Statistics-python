@@ -181,7 +181,7 @@ class SumPath:
         else:
             return min(indexes_min_length, key=lambda x: self.times(x))
 
-    def analyze_complexity(self, temsor_dim: int = 10, optimize=False):
+    def analyze_complexity(self, tensor_dim: int = 10, optimize=False):
         sum_path = self
         native_flops = []
         optimized_flops = []
@@ -191,7 +191,7 @@ class SumPath:
             _, _, contract_compute = sum_path.contract(contract_index)
             native_flop, optimized_flop, inter_element = analyze_path(
                 contract_compute,
-                tensor_dim=temsor_dim,
+                tensor_dim=tensor_dim,
                 optimize=optimize,
             )
             native_flops.append(native_flop)
