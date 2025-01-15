@@ -1,79 +1,56 @@
-from typing import List, Set
+from typing import List, Set, Generator
 from math import factorial
 import numpy as np
 
 
-def partition(m: int, k: int) -> List[List[Set[int]]]:
+def partitions(m: int, k: int) -> Generator[List[Set[int]], None, None]:
     """
-    Partition the numbers [0, 1, ..., m-1] into k non-empty subsets.
+    Optimized version of partition to generate all ways to partition
+    numbers [0, 1, ..., m-1] into k non-empty subsets.
 
     Args:
         m (int): The total number of elements (from 0 to m-1).
         k (int): The number of subsets to partition into (k < m).
 
-    Returns:
-        List[List[Set[int]]]: A list of all possible partitions. Each partition is a list of k subsets,
-                              where each subset is represented as a set of integers.
-
-    Example:
-        >>> partition(4, 2)
-        [
-            [{0, 1, 2}, {3}],
-            [{0, 1, 3}, {2}],
-            [{0, 1}, {2, 3}],
-            [{0, 2, 3}, {1}],
-            [{0, 2}, {1, 3}],
-            [{0, 3}, {1, 2}],
-            [{0}, {1, 2, 3}]
-        ]
+    Yields:
+        List[Set[int]]: A single partition as a list of k subsets,
+                        where each subset is represented as a set of integers.
     """
 
     def backtrack(
-        pos: int, current_partition: List[Set[int]], result: List[List[Set[int]]]
-    ) -> None:
+        pos: int, current_partition: List[Set[int]], empty_subsets: int
+    ) -> Generator[List[Set[int]], None, None]:
         """
-        Recursively generate all possible partitions.
+        Recursively generate all possible partitions with optimizations.
 
         Args:
             pos (int): The current number being processed.
             current_partition (List[Set[int]]): The current partition being constructed.
-            result (List[List[Set[int]]]): The list to store all valid partitions.
+            empty_subsets (int): The count of empty subsets still available.
+
+        Yields:
+            List[Set[int]]: A valid partition.
         """
-        # If all numbers have been assigned
+        # If all elements are processed, yield the partition
         if pos == m:
-            # Ensure all k subsets are non-empty
-            if all(len(subset) > 0 for subset in current_partition):
-                result.append([subset.copy() for subset in current_partition])
+            if empty_subsets == 0:
+                yield current_partition
             return
 
-        # Calculate the number of remaining numbers and subsets
-        remaining_numbers = m - pos
-        remaining_subsets = k - len(current_partition)
-
-        # If remaining numbers equal remaining subsets, each number must go into a new subset
-        if remaining_numbers == remaining_subsets:
-            for num in range(pos, m):
-                current_partition.append(set([num]))
-            backtrack(m, current_partition, result)
-            for _ in range(remaining_subsets):
-                current_partition.pop()
-            return
-
-        # Try to place the current number into an existing subset
+        # Try placing `pos` in each existing subset
         for subset in current_partition:
             subset.add(pos)
-            backtrack(pos + 1, current_partition, result)
+            yield from backtrack(pos + 1, current_partition, empty_subsets)
             subset.remove(pos)
 
-        # Try to place the current number into a new subset
-        if len(current_partition) < k:
-            current_partition.append(set([pos]))
-            backtrack(pos + 1, current_partition, result)
+        # Try creating a new subset for `pos` if possible
+        if empty_subsets > 0:
+            current_partition.append({pos})
+            yield from backtrack(pos + 1, current_partition, empty_subsets - 1)
             current_partition.pop()
 
-    result: List[List[Set[int]]] = []
-    backtrack(0, [], result)
-    return result
+    # Start backtracking with an empty partition and all k subsets available
+    yield from backtrack(0, [], k)
 
 
 def encode_partition(partition: List[Set[int]]) -> List[int]:
@@ -118,3 +95,22 @@ def partition_weights(partition: List[Set[int]]) -> int:
     sign = (-1) ** (sum(len_lst) - num_partitions)
     value = np.prod([factorial(n - 1) for n in len_lst])
     return sign * value
+
+
+def stirling_number(n, k):
+    dp = [[0] * (k + 1) for _ in range(n + 1)]
+    dp[0][0] = 1
+    for i in range(1, n + 1):
+        for j in range(1, k + 1):
+            dp[i][j] = j * dp[i - 1][j] + dp[i - 1][j - 1]
+    return dp[n][k]
+
+
+if __name__ == "__main__":
+    ps = partitions(5, 2)
+    count = 0
+    for p in ps:
+        count += 1
+        print(p)
+    print(f"Total partitions: {count}")
+    print(stirling_number(5, 2))
