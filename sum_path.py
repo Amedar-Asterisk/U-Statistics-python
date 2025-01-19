@@ -1,6 +1,7 @@
 import numpy as np
 from utils import reverse_mapping, support_list, dedup, strings2format, analyze_path
 from typing import List, Tuple
+import math
 
 
 class index_table:
@@ -201,3 +202,28 @@ class SumPath:
         # optimized_flop = sum(optimized_flops)
         # inter_element = max(inter_elements)
         return native_flop
+
+
+def critical_complexity_order(k: int) -> int:
+    return k * (k - 1) // 2 if k % 2 != 0 else k * (k - 1) // 2 + k // 2
+
+
+def complexity_order(m: int) -> tuple[int, int]:
+    if m <= 0:
+        return (1, 2)
+    k = int((1 + math.sqrt(1 + 8 * m)) / 2) + 1
+
+    left, right = 1, k
+    while left < right:
+        mid = (left + right) // 2
+        if critical_complexity_order(mid) <= m:
+            left = mid + 1
+        else:
+            right = mid
+
+    return left - 1
+
+
+if __name__ == "__main__":
+    print(critical_complexity_order(6))
+    print(complexity_order(10))

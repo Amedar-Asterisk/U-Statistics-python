@@ -34,7 +34,7 @@ def partitions(m: int, k: int) -> Generator[List[Set[int]], None, None]:
         # If all elements are processed, yield the partition
         if pos == m:
             if empty_subsets == 0:
-                yield current_partition
+                yield [set(subset) for subset in current_partition]
             return
 
         # Try placing `pos` in each existing subset
@@ -51,6 +51,11 @@ def partitions(m: int, k: int) -> Generator[List[Set[int]], None, None]:
 
     # Start backtracking with an empty partition and all k subsets available
     yield from backtrack(0, [], k)
+
+
+def get_all_partitions(m: int) -> Generator[List[Set[int]], None, None]:
+    for k in range(1, m + 1):
+        yield from partitions(m, k)
 
 
 def encode_partition(partition: List[Set[int]]) -> List[int]:
@@ -93,24 +98,14 @@ def partition_weights(partition: List[Set[int]]) -> int:
     len_lst = [len(s) for s in partition]
     num_partitions = len(len_lst)
     sign = (-1) ** (sum(len_lst) - num_partitions)
-    value = np.prod([factorial(n - 1) for n in len_lst])
+    value = np.prod([factorial(m - 1) for m in len_lst])
     return sign * value
 
 
-def stirling_number(n, k):
-    dp = [[0] * (k + 1) for _ in range(n + 1)]
+def stirling_number(m: int, k: int) -> int:
+    dp = [[0] * (k + 1) for _ in range(m + 1)]
     dp[0][0] = 1
-    for i in range(1, n + 1):
+    for i in range(1, m + 1):
         for j in range(1, k + 1):
             dp[i][j] = j * dp[i - 1][j] + dp[i - 1][j - 1]
-    return dp[n][k]
-
-
-if __name__ == "__main__":
-    ps = partitions(5, 2)
-    count = 0
-    for p in ps:
-        count += 1
-        print(p)
-    print(f"Total partitions: {count}")
-    print(stirling_number(5, 2))
+    return dp[m][k]

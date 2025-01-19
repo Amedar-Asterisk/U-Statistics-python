@@ -1,4 +1,4 @@
-from V_statistics import V_statistic, V_stats_torch
+from V_statistics import V_statistics, V_stats_torch
 from U2V import partitions, encode_partition, partition_weights
 import numpy as np
 
@@ -14,7 +14,7 @@ def U_stats(Tensor_list: list[np.ndarray], order: int):
     U_stats = 0
     for k in range(1, order + 1):
         for partition in partitions(order, k):
-            U_stats += V_statistic(
+            U_stats += V_statistics(
                 Tensor_list, V_sequence=encode_partition(partition)
             ) * partition_weights(partition)
     return U_stats / np.prod(np.arange(n_samples, n_samples - order, -1))

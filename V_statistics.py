@@ -83,7 +83,7 @@ def Tensor_sum(
         )
 
 
-def V_statistic(
+def V_statistics(
     tensor_list: list[np.ndarray],
     V_sequence: list[int] = None,
     compute_formats=False,

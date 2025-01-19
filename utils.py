@@ -6,20 +6,6 @@ import numpy as np
 AB_talbe = list(string.ascii_lowercase)
 
 
-# A decorator that can make a single argument of a single value function support list
-def support_list(func):
-    def wrapper(
-        is_lst_args=False,
-        *args,
-    ):
-        if not is_lst_args:
-            return func(*args)
-        else:
-            return [func(*args) for args in is_lst_args]
-
-    return wrapper
-
-
 # This function is to generate the reverse mapping of a dictionary
 def reverse_mapping(mapping: dict) -> dict:
     reverse = defaultdict(list)
@@ -133,3 +119,13 @@ def analyze_path(compute_format: str, optimize=False, tensor_dim=10, path_func=N
     )
 
     return float(naive_flop), float(optimized_flop), float(largest_intermediate)
+
+
+def estimate_cpolynomial_degree(n_lst: list, flops: list):
+    n_lst = np.array(n_lst)
+    flops = np.array(flops)
+    log_n = np.log(n_lst)
+    log_flops = np.log(flops)
+    A = np.vstack([log_n, np.ones(len(log_n))]).T
+    m, _ = np.linalg.lstsq(A, log_flops, rcond=None)[0]
+    return m
