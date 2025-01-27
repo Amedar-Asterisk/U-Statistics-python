@@ -2,6 +2,10 @@
 from collections import defaultdict
 import string, re
 import numpy as np
+import threading
+from queue import Queue
+import queue
+import logging
 
 AB_talbe = list(string.ascii_lowercase)
 
@@ -129,3 +133,88 @@ def estimate_cpolynomial_degree(n_lst: list, flops: list):
     A = np.vstack([log_n, np.ones(len(log_n))]).T
     m, _ = np.linalg.lstsq(A, log_flops, rcond=None)[0]
     return m
+
+
+class SequenceWriter:
+    """
+    A thread-safe class for asynchronously writing path data to an HDF5 file.
+
+    This class uses a producer-consumer model, where the main thread (producer) adds
+    data to a queue, and a background thread (consumer) writes the data to the file.
+
+    Attributes:
+        queue (Queue): A thread-safe queue for storing data to be written.
+        h5_path (str): The path to the HDF5 file where data will be saved.
+        running (bool): A flag to control the background thread's execution.
+        thread (Thread): The background thread responsible for writing data.
+    """
+
+    def __init__(self, h5_path, max_queue_size=1000):
+        """
+        Initializes the PathWriter instance.
+
+        Args:
+            h5_path (str): The path to the HDF5 file where data will be saved.
+            max_queue_size (int, optional): The maximum size of the queue. Defaults to 1000.
+        """
+        self.queue = Queue(maxsize=max_queue_size)
+        self.h5_path = h5_path
+        self.running = True
+
+        # Start the background thread
+        self.thread = threading.Thread(target=self._write_worker, daemon=True)
+        self.thread.start()
+
+    def _write_worker(self):
+        """
+        The worker method for the background thread.
+
+        Continuously retrieves data from the queue and writes it to the HDF5 file.
+        Exits when `self.running` is False and the queue is empty.
+        """
+        while self.running or not self.queue.empty():
+            try:
+                data = self.queue.get(timeout=1)  # Wait for 1 second
+                if data is not None:
+                    group_path, path = data
+                    path.save(self.h5_path, group_path)
+                self.queue.task_done()
+            except queue.Empty:
+                continue  # Queue is empty, continue waiting
+            except Exception as e:
+                logging.error(f"Error while writing data: {e}")
+                continue
+
+    def add_path(self, path, group_path):
+        """
+        Adds a path and its group path to the queue for writing.
+
+        Args:
+            path (object): The path object to be saved. Must have a `save` method.
+            group_path (str): The group path within the HDF5 file where the data will be saved.
+
+        Raises:
+            ValueError: If `path` or `group_path` is None.
+        """
+        if path is None or group_path is None:
+            raise ValueError("path and group_path cannot be None")
+        self.queue.put((path, group_path))
+
+    def stop(self):
+        """
+        Stops the background thread gracefully.
+
+        Waits for all remaining tasks in the queue to be processed before stopping the thread.
+        """
+        self.running = False
+        self.queue.join()  # Wait for all tasks in the queue to complete
+        self.thread.join()  # Wait for the thread to exit
+
+    def is_running(self):
+        """
+        Checks if the background thread is still running.
+
+        Returns:
+            bool: True if the thread is running, False otherwise.
+        """
+        return self.thread.is_alive()

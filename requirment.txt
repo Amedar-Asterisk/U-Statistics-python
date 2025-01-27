@@ -1,0 +1,7 @@
+numpy
+
+# optional
+torch
+opt_einsum
+joblib
+networkx

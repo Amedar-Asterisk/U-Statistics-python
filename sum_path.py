@@ -1,10 +1,19 @@
+##################################################
+# Description:
+# The SumPath class is used to store the index pairs of the tensor operands and calculate the contraction path of the tensor network.
+# The _IndexTable class is used to store the indexes of the tensor operands.
+# The critical_complexity_order function is used to calculate the critical complexity order of a tensor network.
+# The complexity_order function is used to calculate the complexity order of a tensor network.
+# The analyze_complexity function is used to analyze the complexity of a tensor network.
+
+
 import numpy as np
-from utils import reverse_mapping, support_list, dedup, strings2format, analyze_path
+from utils import reverse_mapping, dedup, strings2format, analyze_path
 from typing import List, Tuple
 import math
 
 
-class index_table:
+class _IndexTable:
     def __init__(self):
         self._p_dict = {}
 
@@ -52,7 +61,7 @@ class SumPath:
             sequence (list): a list of index pairs of each tensor in order. The index pair is a string.
         """
         self._pair_list = {i: pair for i, pair in enumerate(inputs)}
-        self._index_table = index_table()
+        self._index_table = _IndexTable()
         for i in range(len(self._pair_list)):
             for index in self._pair_list[i]:
                 self._index_table.append(index, i)
@@ -84,7 +93,6 @@ class SumPath:
     def times(self, index: str):
         return len(self.index_table.locations(index))
 
-    @support_list
     def remove(self, pair_position: int):
         for index in self.pair(pair_position):
             self._index_table.remove(index, pair_position)
@@ -222,8 +230,3 @@ def complexity_order(m: int) -> tuple[int, int]:
             right = mid
 
     return left - 1
-
-
-if __name__ == "__main__":
-    print(critical_complexity_order(6))
-    print(complexity_order(10))

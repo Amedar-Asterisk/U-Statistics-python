@@ -1,3 +1,12 @@
+##################################################
+# Description:
+# The U2V class is used to convert a U-statistics graph to a V-statistics graph.
+# The encode_partition function is used to encode a partition using the minimum value of each subset.
+# The partition_weights function is used to calculate the weight of a partition.
+# The stirling_number function is used to calculate the Stirling number of the second kind.
+# The get_all_partitions function is used to generate all possible partitions of numbers [0, 1, ..., m-1] into k non-empty subsets.
+# The partitions function is used to generate all ways to partition numbers [0, 1, ..., m-1] into k non-empty subsets.
+
 from typing import List, Set, Generator
 from math import factorial
 import numpy as np
