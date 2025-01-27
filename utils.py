@@ -137,7 +137,7 @@ def estimate_cpolynomial_degree(n_lst: list, flops: list):
 
 class SequenceWriter:
     """
-    A thread-safe class for asynchronously writing path data to an HDF5 file.
+    A thread-safe class for asynchronously writing objects to an HDF5 file.
 
     This class uses a producer-consumer model, where the main thread (producer) adds
     data to a queue, and a background thread (consumer) writes the data to the file.
@@ -151,7 +151,7 @@ class SequenceWriter:
 
     def __init__(self, h5_path, max_queue_size=1000):
         """
-        Initializes the PathWriter instance.
+        Initializes the SequenceWriter instance.
 
         Args:
             h5_path (str): The path to the HDF5 file where data will be saved.
@@ -176,8 +176,8 @@ class SequenceWriter:
             try:
                 data = self.queue.get(timeout=1)  # Wait for 1 second
                 if data is not None:
-                    group_path, path = data
-                    path.save(self.h5_path, group_path)
+                    obj, group_path = data
+                    obj.save(self.h5_path, group_path)
                 self.queue.task_done()
             except queue.Empty:
                 continue  # Queue is empty, continue waiting
@@ -185,20 +185,20 @@ class SequenceWriter:
                 logging.error(f"Error while writing data: {e}")
                 continue
 
-    def add_path(self, path, group_path):
+    def add_obj(self, obj, group_path=None):
         """
-        Adds a path and its group path to the queue for writing.
+        Adds an object and its group path to the queue for writing.
 
         Args:
-            path (object): The path object to be saved. Must have a `save` method.
+            obj (object): The object to be saved. Must have a `save` method.
             group_path (str): The group path within the HDF5 file where the data will be saved.
 
         Raises:
-            ValueError: If `path` or `group_path` is None.
+            ValueError: If `obj` is None.
         """
-        if path is None or group_path is None:
-            raise ValueError("path and group_path cannot be None")
-        self.queue.put((path, group_path))
+        if obj is None:
+            raise ValueError("obj and group_path cannot be None")
+        self.queue.put((obj, group_path))
 
     def stop(self):
         """

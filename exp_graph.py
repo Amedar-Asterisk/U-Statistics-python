@@ -44,7 +44,8 @@ for m in range(m_min, m_max + 1):
     for result in results:
         if result:
             k, path = result
-            path_writer.queue.put((f"order_{m}", path))
+            group_path = f"{m}/{k}"
+            path_writer.add_obj(path, group_path)
             degree_dict[k] = degree_dict.get(k, []) + [path.max_contraction_degree]
     for k, degrees in degree_dict.items():
         degree_dict[k] = max(degrees)
