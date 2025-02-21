@@ -1,7 +1,7 @@
 from joblib import Parallel, delayed
-from U2V import encode_partition, get_all_partitions
-from V_statistics import indexes2strlst
-from sum_path import SumPath, complexity_order
+from statistics.U2V import encode_partition, get_all_partitions
+from statistics.V_statistics import indexes2strlst
+from tensor_contraction.state import SumPath, complexity_order
 import numpy as np
 import csv, time
 

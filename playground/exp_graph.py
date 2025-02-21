@@ -1,12 +1,16 @@
 from joblib import Parallel, delayed
-from U2V import encode_partition, get_all_partitions
-from graph import *
-from utils import SequenceWriter
-import numpy as np
+from itertools import islice
+from Ustats.statistics.U2V import encode_partition, get_all_partitions
+from U_stats.graph import *
+from U_stats.utils import SequenceWriter
 import csv, time, os
+import os
+
 
 m_min = 4
 m_max = 10
+batch_size = 10000
+
 dir_path = "data"
 csv_path = os.path.join(dir_path, "max_degree.csv")
 h5_path = os.path.join(dir_path, "graph_contraction.h5")
@@ -19,7 +23,7 @@ with open(csv_path, "w") as f:
 path_writer = SequenceWriter(h5_path)
 
 
-def eval_func(partition, save_dict: dict):
+def eval_func(partition):
     indexes = encode_partition(partition)
     k = len(partition)
     graph = VGraph(indexes)
@@ -32,21 +36,24 @@ def eval_func(partition, save_dict: dict):
 for m in range(m_min, m_max + 1):
     start_time = time.time()
     degree_dict = dict()
-    eval_func_m = lambda partition: eval_func(partition, degree_dict)
-    results = Parallel(n_jobs=-1)(
-        delayed(eval_func_m)(partition) for partition in get_all_partitions(m)
-    )
+    partitions = get_all_partitions(m)
+    while True:
+        batch = list(islice(partitions, batch_size))
+        if not batch:
+            break
+        results = Parallel(n_jobs=-1)(
+            delayed(eval_func)(partition) for partition in batch
+        )
+        for result in results:
+            if result:
+                k, path = result
+                group_path = f"{m}/{k}"
+                path_writer.add_obj(path, group_path)
+                degree_dict[k] = degree_dict.get(k, []) + [path.max_contraction_degree]
     end_time = time.time()
     print(
-        f"processing time: {end_time}",
         f"order {m} V-graph analysis finished in {end_time - start_time} seconds",
     )
-    for result in results:
-        if result:
-            k, path = result
-            group_path = f"{m}/{k}"
-            path_writer.add_obj(path, group_path)
-            degree_dict[k] = degree_dict.get(k, []) + [path.max_contraction_degree]
     for k, degrees in degree_dict.items():
         degree_dict[k] = max(degrees)
     with open(csv_path, "a+") as f:

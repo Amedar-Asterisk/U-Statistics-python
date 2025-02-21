@@ -6,29 +6,28 @@
 
 import os
 import h5py as h5
-from typing import List, Optional, Tuple, Set
+from typing import Generator, List, Optional, Tuple, Set
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import combinations
+import logging
 
-from V_statistics import indexes2strlst
 
+def mode_graph(mode: List[List[int]]) -> nx.Graph:
+    """
+    Create a graph from a mode list
 
-class VGraph(nx.Graph):
-    """Graph class inherited from networkx.Graph for V-statistics"""
+    Args:
+        mode: Mode list
 
-    def __init__(self, indexes: List = None) -> None:
-        """
-        Initialize V_Graph
-
-        Args:
-            indexes: List of indexes to create the graph
-        """
-        super().__init__()
-        if indexes:
-            edges = indexes2strlst(indexes)
-            self.add_edges_from([edge for edge in edges if edge[0] != edge[1]])
+    Returns:
+        nx.Graph: Graph object
+    """
+    G = nx.Graph()
+    for m in mode:
+        G.add_edges_from(combinations(m, 2))
+    return G
 
 
 class ContractPath:
@@ -196,7 +195,7 @@ class ContractPath:
                     )
                 return self._hash
             except Exception as e:
-                print(e)
+                logging.error(f"Error while saving data: {e}")
                 return False
 
     @classmethod
@@ -276,6 +275,6 @@ class ContractPath:
         return nx.weisfeiler_lehman_graph_hash(graph, edge_attr=None)
 
 
-def regular_graph(n, k):
+def regular_graph(n: int, k: int) -> Generator[nx.Graph, None, None]:
     assert n * k % 2 == 0 and 0 <= k < n, "Invalid parameters"
     yield nx.random_regular_graph(k, n)
