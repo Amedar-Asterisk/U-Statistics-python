@@ -34,6 +34,8 @@ class VStatsCalculator(TensorContractionCalculator):
             float, the V statistics of the kernel matrices
         """
         mode = self.mode.copy()
+        tensors = tensors.copy()
+        n_samples = tensors[0].shape[0]
         if _init:
             tensors = TensorContractionCalculator._initalize_tensor_dict(
                 self, tensors, self.shape
@@ -44,7 +46,6 @@ class VStatsCalculator(TensorContractionCalculator):
         result = TensorContractionCalculator._tensor_contract(self, tensors, mode)
 
         if average:
-            n_samples = tensors[0].shape[0]
             return result / (n_samples**self.order)
         return result
 

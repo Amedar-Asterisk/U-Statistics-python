@@ -59,10 +59,10 @@ class TensorContractionCalculator:
         shape: Tuple[int, ...],
     ) -> None:
         """Validate the input tensors and mode."""
-        if max(tensors.keys()) != len(shape):
+        if len(tensors.keys()) != len(shape):
             raise ValueError("The number of tensors does not match the mode shape.")
         for i, tensor in tensors.items():
-            if tensor.shape != shape[i]:
+            if len(tensor.shape) != shape[i]:
                 raise ValueError(f"Tensor {i} has an invalid shape.")
         n_samples = tensors[0].shape[0]
         for tensor in tensors.values():
@@ -73,6 +73,7 @@ class TensorContractionCalculator:
         self, tensor_dict: Dict[int, np.ndarray], mode: TensorContractionState
     ) -> float:
         """Contract tensors according to the computing sequence."""
+        tensor_dict = tensor_dict.copy()
         if len(mode) == 0:
             return np.prod(list(tensor_dict.values()))
 
@@ -81,7 +82,6 @@ class TensorContractionCalculator:
             contract_indices, save_position, contract_compute = mode.contract(
                 contract_index
             )
-
             tensor_dict[save_position] = self.summor(
                 contract_compute, *[tensor_dict[i] for i in contract_indices]
             )

@@ -1,8 +1,8 @@
 from ..tensor_contraction.state import TensorContractionState
 from ..tensor_contraction.calculator import TensorContractionCalculator
 from typing import List, Union, Hashable, Generator, Tuple
-from statistics.U2V import get_all_partitions, partition_weight
-from U_stats.utils import standardize_indexes
+from .U2V import get_all_partitions, partition_weight
+from ..utils import standardize_indexes
 import numpy as np
 import itertools
 
@@ -14,8 +14,10 @@ class UMode(TensorContractionState):
     def submode(self, partition: List[set]) -> Tuple[float, "UMode"]:
         new_mode = self.copy()
         mapping = {}
+        weight = partition_weight(partition)
+
         for s in partition:
-            representative = s.pop()
+            representative = next(iter(s))
             for element in s:
                 if element != representative:
                     mapping[element] = representative
@@ -27,8 +29,7 @@ class UMode(TensorContractionState):
 
         for orig, rep in mapping.items():
             new_mode._index_table.merge(orig, rep)
-
-        return partition_weight(partition), new_mode
+        return weight, new_mode
 
     def submodes(self) -> Generator["UMode", None, None]:
         partitions = get_all_partitions(self.indexes)
@@ -72,7 +73,7 @@ class UStatsCalculator(TensorContractionCalculator):
         result = 0
         for weight, submode in self.mode.submodes():
             result += weight * TensorContractionCalculator._tensor_contract(
-                self, tensors, submode, _init=False, _validate=False
+                self, tensors, submode
             )
         if average:
             n_samples = tensors[0].shape[0]

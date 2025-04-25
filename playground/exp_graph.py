@@ -1,6 +1,6 @@
 from joblib import Parallel, delayed
 from itertools import islice
-from Ustats.statistics.U2V import encode_partition, get_all_partitions
+from U_stats.statistics.U2V import encode_partition, get_all_partitions
 from U_stats.graph import *
 from U_stats.utils import SequenceWriter
 import csv, time, os

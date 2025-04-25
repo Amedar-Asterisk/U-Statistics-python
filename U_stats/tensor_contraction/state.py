@@ -1,5 +1,5 @@
-from U_stats.utils import reverse_mapping, dedup, strings2format
-from mode import StandardizedMode
+from ..utils import reverse_mapping, dedup, strings2format
+from .mode import StandardizedMode
 from typing import List, Tuple, Dict, Set, Union, Hashable
 import math
 from copy import deepcopy
@@ -278,6 +278,9 @@ class TensorContractionState(StandardizedMode):
         for pos in positions_set:
             self._data.pop(pos)
 
+        if self._data[0] == "":
+            self._data.pop(0)
+
         return frontmost
 
     def dedup(self) -> Dict[int, str]:
@@ -341,13 +344,11 @@ class TensorContractionState(StandardizedMode):
         positions = self._index_table.locations(index)
         compute_positions = sorted(positions)
 
-        pairs = (self.pair(pos) for pos in compute_positions)
+        pairs = [self.pair(pos) for pos in compute_positions]
         result = dedup(pairs).replace(index, "")
-
         compute_format = strings2format(
             [self.pair(pos) for pos in compute_positions], result
         )
-
         save_position = self.replace(compute_positions, result)
 
         return compute_positions, save_position, compute_format

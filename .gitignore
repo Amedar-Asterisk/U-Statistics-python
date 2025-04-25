@@ -4,3 +4,4 @@
 .vscode/*
 paper/*
 data/*
+*.pyc

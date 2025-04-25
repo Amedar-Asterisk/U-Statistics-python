@@ -18,7 +18,7 @@ from typing import (
     Union,
     overload,
 )
-from U_stats.utils import *
+from ..utils import *
 from math import factorial
 import numpy as np
 
@@ -31,17 +31,18 @@ def partitions(m: int, k: int) -> Generator[List[Set[int]], None, None]: ...
 
 @overload
 def partitions(
-    elements: Sequence[T], k: int
+    elements: Union[Sequence[T], Set[T]], k: int
 ) -> Generator[List[Set[T]], None, None]: ...
 
 
 def partitions(
-    elements: Union[int, Sequence[T]], k: int
+    elements: Union[int, Sequence[T], Set[T]], k: int
 ) -> Generator[List[Set[Union[int, T]]], None, None]:
     if isinstance(elements, int):
         m = elements
         elements = range(elements)
     else:
+        elements = list(elements)
         m = len(elements)
 
     if k > m:
@@ -69,7 +70,7 @@ def partitions(
 
 
 def get_all_partitions(
-    elements: Union[int, Sequence[T]]
+    elements: Union[int, Sequence[T]],
 ) -> Generator[List[Set[Union[int, T]]], None, None]:
     if isinstance(elements, int):
         m = elements
