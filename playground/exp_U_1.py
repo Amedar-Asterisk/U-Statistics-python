@@ -32,7 +32,7 @@ def produce_data(
     return X, A
 
 
-def get_input_tensor(n: int, kappa: float) -> Tuple[np.ndarray, np.ndarray]:
+def get_input_tensor(n: int, kappa: float = 0.5) -> Tuple[np.ndarray, np.ndarray]:
     """Create kernel matrix and treatment vector for U-statistics computation.
 
     Args:
@@ -91,7 +91,9 @@ def test_mode(m: int) -> List[Union[int, Tuple[int, int]]]:
     return outputs
 
 
-def U_stats_single(m: int, Ker: np.ndarray, A: np.ndarray) -> Tuple[Any, float]:
+def U_stats_single(
+    m: int, Ker: np.ndarray, A: np.ndarray, summor="numpy"
+) -> Tuple[Any, float]:
     """Compute U-statistics for a single tensor.
 
     Args:
@@ -106,13 +108,15 @@ def U_stats_single(m: int, Ker: np.ndarray, A: np.ndarray) -> Tuple[Any, float]:
     inputs = get_tensors(m, Ker, A)
     mode = test_mode(m)
     time1 = time.time()
-    result = U_stats(inputs, mode)
+    result = U_stats(inputs, mode, summor=summor)
     time2 = time.time()
     compute_time = time2 - time1
     return result, compute_time
 
 
-def test(n: int, m: int | List[int], kappa: float = 0.5) -> Tuple[Any, float, float]:
+def test(
+    n: int, m: int | List[int], kappa: float = 0.5, summor="numpy"
+) -> Tuple[Any, float, float]:
     """Run U-statistics test and measure execution time.
 
     Args:
@@ -131,17 +135,35 @@ def test(n: int, m: int | List[int], kappa: float = 0.5) -> Tuple[Any, float, fl
         Ker, A = get_input_tensor(n, kappa)
         time2 = time.time()
         assemble_time = time2 - time1
+        if summor == "torch":
+            import torch
+
+            torch.set_default_device("cuda" if torch.cuda.is_available() else "cpu")
+            Ker = torch.tensor(Ker, dtype=torch.float32)
+            A = torch.tensor(A, dtype=torch.float32)
 
         if isinstance(m, int):
-            result, compute_time = U_stats_single(m, Ker, A)
+            result, compute_time = U_stats_single(m, Ker, A, summor=summor)
         elif isinstance(m, list):
             result = []
             compute_time = []
             for i in m:
-                res, time3 = U_stats_single(i, Ker, A)
+                res, time3 = U_stats_single(i, Ker, A, summor=summor)
                 result.append(res)
                 compute_time.append(time3)
         return result, assemble_time, compute_time
     except Exception as e:
         print(f"Testing Error: {e}")
         return None, None, None
+
+
+if __name__ == "__main__":
+    import torch
+
+    n = 5000
+    m = 5
+
+    result, assemble_time, compute_time = test(n, m, summor="torch")
+    print(f"Result: {result}")
+    print(f"Assemble Time: {assemble_time:.4f} seconds")
+    print(f"Compute Time: {compute_time:.4f} seconds")

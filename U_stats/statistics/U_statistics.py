@@ -83,18 +83,24 @@ class UStatsCalculator(TensorContractionCalculator):
 
 
 def U_stats(
-    tensors: List[np.ndarray], mode: List[Union[List[Hashable], str]], average=True
+    tensors: List[np.ndarray],
+    mode: List[Union[List[Hashable], str]],
+    average=True,
+    summor: str = "numpy",
 ) -> float:
     """
     Calculate the U statistics of a list of kernel matrices(tensors) with particular mode.
 
     Args:
         tensors: List[np.ndarray], a list of kernel matrices
+        mode: List[Union[List[Hashable], str]], the mode of the U statistics
+        average: bool, whether to average the U statistics
+        summor: str, either "numpy" or "torch"
 
     Returns:
         float, the U statistics of the kernel matrices
     """
-    return UStatsCalculator(mode).calculate(tensors, average)
+    return UStatsCalculator(mode, summor=summor).calculate(tensors, average)
 
 
 def U_stats_loop(tensors: List[np.ndarray], mode: List[List[int]]) -> float:

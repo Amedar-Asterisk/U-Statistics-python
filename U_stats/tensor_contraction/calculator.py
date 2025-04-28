@@ -47,11 +47,14 @@ class TensorContractionCalculator:
         shape: Tuple[int, ...],
     ) -> Dict[int, np.ndarray]:
         """Initialize the tensor dictionary."""
-        if isinstance(tensors, List):
+
+        if isinstance(tensors, list):
             return {i: tensor for i, tensor in enumerate(tensors) if shape[i] > 0}
-        elif isinstance(tensors, Dict):
+        elif isinstance(tensors, dict):
             return {i: tensor for i, tensor in tensors.items() if shape[i] > 0}
-        raise ValueError("Invalid input: tensors must be a list or a dictionary.")
+        raise ValueError(
+            f"Invalid input: tensors must be a list or a dictionary but it is {type(tensors)}."
+        )
 
     def _validate_inputs(
         self,
