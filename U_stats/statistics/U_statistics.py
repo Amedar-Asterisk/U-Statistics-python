@@ -23,7 +23,6 @@ class UMode(TensorContractionState):
             for element in s:
                 if element != representative:
                     mapping[element] = representative
-
         for pos in range(len(new_mode._data)):
             pair = new_mode._data[pos]
             new_pair = "".join(mapping.get(index, index) for index in pair)

@@ -64,7 +64,7 @@ def get_tensors(m: int, Ker: np.ndarray, A: np.ndarray) -> List[np.ndarray]:
     """
     outputs = []
     outputs.append(A)
-    for _ in range(m - 2):
+    for _ in range(m - 1):
         outputs.append(Ker)
     outputs.append(A)
     return outputs
@@ -81,13 +81,13 @@ def test_mode(m: int) -> List[Union[int, Tuple[int, int]]]:
         and middle elements are pairs of consecutive integers.
     """
     outputs = []
-    for i in range(m):
+    for i in range(m + 1):
         if i == 0:
-            outputs.append((i))
-        elif i == m - 1:
-            outputs.append((i))
+            outputs.append([i])
+        elif i == m:
+            outputs.append([i - 1])
         else:
-            outputs.append((i, i + 1))
+            outputs.append([i - 1, i])
     return outputs
 
 
@@ -126,18 +126,22 @@ def test(n: int, m: int | List[int], kappa: float = 0.5) -> Tuple[Any, float, fl
             - assemble_time: Time taken to assemble input tensors
             - compute_time: Time taken to compute U-statistics
     """
-    time1 = time.time()
-    Ker, A = get_input_tensor(n, kappa)
-    time2 = time.time()
-    assemble_time = time2 - time1
+    try:
+        time1 = time.time()
+        Ker, A = get_input_tensor(n, kappa)
+        time2 = time.time()
+        assemble_time = time2 - time1
 
-    if isinstance(m, int):
-        result, compute_time = U_stats_single(m, Ker, A)
-    elif isinstance(m, list):
-        result = []
-        compute_time = []
-        for i in m:
-            res, time3 = U_stats_single(i, Ker, A)
-            result.append(res)
-            compute_time.append(time3)
-    return result, assemble_time, compute_time
+        if isinstance(m, int):
+            result, compute_time = U_stats_single(m, Ker, A)
+        elif isinstance(m, list):
+            result = []
+            compute_time = []
+            for i in m:
+                res, time3 = U_stats_single(i, Ker, A)
+                result.append(res)
+                compute_time.append(time3)
+        return result, assemble_time, compute_time
+    except Exception as e:
+        print(f"Testing Error: {e}")
+        return None, None, None

@@ -149,12 +149,11 @@ class TensorContractionState(StandardizedMode):
         """
         super().__init__(mode)
         pair_dict = dict.fromkeys(range(len(mode)), None)
-        for i, pair in enumerate(mode):
+        for i, pair in enumerate(self._data):
             if len(pair) > 0:
                 pair_dict[i] = pair
         self._data: Dict[int, str] = pair_dict
         self._index_table = IndexRegistry()
-
         for i, pair in self._data.items():
             for index in pair:
                 self._index_table.append(index, i)
