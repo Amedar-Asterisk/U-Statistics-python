@@ -1,3 +1,3 @@
-from .U_statistics import *
-from .V_statistics import *
-from . import U2V
+import U_statistics, V_statistics, U2V
+
+__all__ = U_statistics.__all__ + V_statistics.__all__ + U2V.__all__
