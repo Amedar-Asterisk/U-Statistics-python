@@ -277,8 +277,9 @@ class TensorContractionState(StandardizedMode):
         for pos in positions_set:
             self._data.pop(pos)
 
-        if self._data[0] == "":
-            self._data.pop(0)
+        # print(self._data)
+        # if self._data[0] == "":
+        #     self._data.pop(0)
 
         return frontmost
 
@@ -402,6 +403,8 @@ class TensorContractionState(StandardizedMode):
         Returns:
             str: The index chosen for next contraction
         """
+        if self.indexes == set():
+            return None
         self.eval_result_length()
         indexes_min_length = self.length_indicator[min(self.length_indicator)]
         if len(indexes_min_length) == 1:

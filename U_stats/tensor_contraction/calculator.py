@@ -80,7 +80,7 @@ class TensorContractionCalculator:
         if len(mode) == 0:
             return np.prod(list(tensor_dict.values()))
 
-        while len(mode) > 0:
+        while len(mode.indexes) > 0:
             contract_index = mode.next_contract()
             contract_indices, save_position, contract_compute = mode.contract(
                 contract_index

@@ -13,6 +13,13 @@ import time
 import U_stats
 
 
-# if __name__ == "__main__":
-#     print(os.getcwd())
-#     print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+def timer(func):
+    """Decorator to measure execution time of a function."""
+
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        return result, end_time - start_time
+
+    return wrapper

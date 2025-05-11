@@ -3,6 +3,7 @@ import numpy as np
 import time
 from init import *
 from U_stats.statistics.U_statistics import U_stats
+from U_stats.statistics.U_statistics import U_stats_loop
 
 
 def produce_data(
@@ -32,7 +33,8 @@ def produce_data(
     return X, A
 
 
-def get_input_tensor(n: int, kappa: float = 0.5) -> Tuple[np.ndarray, np.ndarray]:
+@timer
+def get_input_tensor(n: int, kappa: float = 0.5):
     """Create kernel matrix and treatment vector for U-statistics computation.
 
     Args:
@@ -91,79 +93,55 @@ def test_mode(m: int) -> List[Union[int, Tuple[int, int]]]:
     return outputs
 
 
-def U_stats_single(
-    m: int, Ker: np.ndarray, A: np.ndarray, summor="numpy"
-) -> Tuple[Any, float]:
-    """Compute U-statistics for a single tensor.
+def prepare_tensors_mode(m: int, Ker: np.ndarray, A: np.ndarray):
+    """Prepare input tensors and mode for U-statistics computation.
 
-    Args:
+    args:
         m: Number of tensors.
         Ker: Kernel matrix.
         A: Treatment vector.
 
     Returns:
-        Computed U-statistics result.
-        Computing time.
+        Tuple containing:
+            - inputs: List of input tensors for U-statistics computation.
+            - mode: Mode configuration for U-statistics testing.
     """
     inputs = get_tensors(m, Ker, A)
     mode = test_mode(m)
-    time1 = time.time()
-    result = U_stats(inputs, mode, summor=summor)
-    time2 = time.time()
-    compute_time = time2 - time1
-    return result, compute_time
+    return inputs, mode
 
 
-def test(
-    n: int, m: int | List[int], kappa: float = 0.5, summor="numpy"
-) -> Tuple[Any, float, float]:
-    """Run U-statistics test and measure execution time.
+@timer
+def test_our(tensors, mode, summor="numpy"):
+    return U_stats(tensors, mode, summor=summor)
 
-    Args:
-        n: Number of samples.
-        m: Number of tensors.
-        kappa: Scale factor for number of features.
 
-    Returns:
-        Tuple containing:
-            - result: Output of U-statistics computation
-            - assemble_time: Time taken to assemble input tensors
-            - compute_time: Time taken to compute U-statistics
-    """
-    try:
-        time1 = time.time()
-        Ker, A = get_input_tensor(n, kappa)
-        time2 = time.time()
-        assemble_time = time2 - time1
-        if summor == "torch":
-            import torch
+@timer
+def test_loop(tensors, mode):
+    return U_stats_loop(tensors, mode)
 
-            torch.set_default_device("cuda" if torch.cuda.is_available() else "cpu")
-            Ker = torch.tensor(Ker, dtype=torch.float32)
-            A = torch.tensor(A, dtype=torch.float32)
 
-        if isinstance(m, int):
-            result, compute_time = U_stats_single(m, Ker, A, summor=summor)
-        elif isinstance(m, list):
-            result = []
-            compute_time = []
-            for i in m:
-                res, time3 = U_stats_single(i, Ker, A, summor=summor)
-                result.append(res)
-                compute_time.append(time3)
-        return result, assemble_time, compute_time
-    except Exception as e:
-        print(f"Testing Error: {e}")
-        return None, None, None
+def test1(n, m, summor="numpy"):
+    tensors, assemble_time = get_input_tensor(n)
+    inputs, mode = prepare_tensors_mode(m, *tensors)
+    result_our, time_our = test_our(inputs, mode, summor=summor)
+    print("result_our:", result_our)
+    print("assemble_time:", assemble_time)
+    print("time_our:", time_our)
+
+
+def test2(n, m, summor="numpy"):
+    tensors, assemble_time = get_input_tensor(n)
+    inputs, mode = prepare_tensors_mode(m, *tensors)
+    result_loop, time_loop = test_loop(inputs, mode)
+    result_our, time_our = test_our(inputs, mode, summor=summor)
+    print("assemble_time:", assemble_time)
+    print("result_our:", result_our)
+    print("time_our:", time_our)
+    print("result_loop:", result_loop)
+    print("time_loop:", time_loop)
+    print("relative error:", np.abs(result_our - result_loop) / np.abs(result_loop))
 
 
 if __name__ == "__main__":
-    import torch
-
-    n = 5000
-    m = 5
-
-    result, assemble_time, compute_time = test(n, m, summor="torch")
-    print(f"Result: {result}")
-    print(f"Assemble Time: {assemble_time:.4f} seconds")
-    print(f"Compute Time: {compute_time:.4f} seconds")
+    test1(100, 4, summor="numpy")
