@@ -64,38 +64,57 @@ def standardize_indexes(lst: list) -> List[List[int]]:
     return standardized_lst
 
 
-def numbers_to_letters(numbers: List[int] | List[List[int]]) -> List[str]:
+def numbers_to_letters(numbers: List[int] | List[List[int]]) -> Tuple[List[str], dict]:
     """
-    Convert numbers or lists of numbers to corresponding letters or letter combinations.
+    Convert numbers or lists of numbers to corresponding letters or letter combinations,
+    and return a mapping from letters back to numbers.
 
     Args:
         numbers (List[int] | List[List[int]]): List of integers or list of integer lists
             Each integer is converted to corresponding lowercase letter (0->a, 1->b, etc)
 
     Returns:
-        List[str]: List of converted letters or letter combinations
+        Tuple[List[str], dict]: A tuple containing:
+            - List of converted letters or letter combinations
+            - Dictionary mapping letters back to their original numbers
 
     Raises:
         TypeError: If input is not a list of integers or list of integer lists
+        ValueError: If any number exceeds alphabet size (26)
 
     Example:
-        >>> numbers_to_letters([0, 1, 2])
+        >>> letters, mapping = numbers_to_letters([0, 1, 2])
+        >>> letters
         ['a', 'b', 'c']
-        >>> numbers_to_letters([[0, 1], [2, 3]])
+        >>> mapping
+        {'a': 0, 'b': 1, 'c': 2}
+        >>> letters, mapping = numbers_to_letters([[0, 1], [2, 3]])
+        >>> letters
         ['ab', 'cd']
+        >>> mapping
+        {'a': 0, 'b': 1, 'c': 2, 'd': 3}
     """
     try:
         result = []
+        letter_to_number = {}
+
         for lst in numbers:
             if isinstance(lst, int):
-                result.append(AB_table[lst])
-            elif isinstance(lst, list):
-                result.append("".join(AB_table[num] for num in lst))
+                letter = AB_table[lst]
+                result.append(letter)
+                letter_to_number[letter] = lst
+            elif isinstance(lst, list | tuple):
+                combined = ""
+                for num in lst:
+                    letter = AB_table[num]
+                    combined += letter
+                    letter_to_number[letter] = num
+                result.append(combined)
             else:
                 raise TypeError(
                     "Input must be a list of integers or list of integer lists"
                 )
-        return result
+        return result, letter_to_number
     except IndexError:
         raise ValueError("Number in input exceeds alphabet size (26)")
 
@@ -343,3 +362,18 @@ class SequenceWriter:
             bool: True if the thread is running, False otherwise.
         """
         return self.thread.is_alive()
+
+
+def einsum_expression_to_mode(expression: str) -> Tuple[str, str]:
+    """
+    Convert an Einstein summation expression to a mode string.
+
+    Args:
+        expression (str): The Einstein summation expression (e.g., 'ij,jk->ik').
+
+    Returns:
+        Tuple[str, str]: A tuple containing the left-hand side and right-hand side modes.
+    """
+    lhs, rhs = expression.split("->")
+    lhs_modes = lhs.split(",")
+    return lhs_modes, rhs

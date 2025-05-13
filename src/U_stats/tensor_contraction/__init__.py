@@ -16,7 +16,6 @@ Example:
 """
 
 from .calculator import TensorContractionCalculator
-from .state import TensorContractionState, IndexRegistry
 
 __version__ = "0.1.0"
 __author__ = "Zhang RuiQi"

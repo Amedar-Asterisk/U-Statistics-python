@@ -1,7 +1,25 @@
 import numpy as np
 import warnings
-from .state import TensorContractionState
+from .path import TensorExpression
 from typing import List, Dict, Tuple, Union, Callable, Hashable
+
+try:
+    import torch
+except ImportError as e:
+    warnings.warn(
+        "torch is not installed. Some functionalities may not work as expected."
+    )
+    torch = None
+
+try:
+    import opt_einsum as oe
+except ImportError as e:
+    warnings.warn(
+        "opt_einsum is not installed. Some functionalities may not work as expected."
+    )
+    oe = None
+
+__BACKEND__ = {"numpy": np.einsum, "torch": torch.einsum, "oe": oe.contract}
 
 
 class TensorContractionCalculator:
@@ -20,26 +38,17 @@ class TensorContractionCalculator:
 
     def _initialize_summor(self, summor: str) -> Callable:
         """Set up the tensor contraction function."""
-        if isinstance(summor, str):
-            if summor == "numpy":
-                return np.einsum
-            elif summor == "torch":
-                try:
-                    import torch
-
-                    return torch.einsum
-                except ImportError:
-                    warnings.warn("torch is not imported, using numpy.einsum.")
-                    return np.einsum
-            raise ValueError("summor must be 'numpy' or 'torch'.")
-        elif callable(summor):
-            return summor
-        raise ValueError("summor must be a callable function can contract tensors.")
+        if summor in __BACKEND__:
+            return __BACKEND__[summor]
+        else:
+            raise ValueError(
+                f"Invalid summor: {summor}. Available options are: {list(__BACKEND__.keys())}"
+            )
 
     def _initalize_mode(
         self, mode: Union[List[List[Hashable]], List[str]]
-    ) -> TensorContractionState:
-        return TensorContractionState(mode)
+    ) -> TensorExpression:
+        return TensorExpression(mode)
 
     def _initalize_tensor_dict(
         self,
@@ -73,25 +82,12 @@ class TensorContractionCalculator:
                 raise ValueError("The number of samples in tensors do not match.")
 
     def _tensor_contract(
-        self, tensor_dict: Dict[int, np.ndarray], mode: TensorContractionState
+        self, tensor_dict: Dict[int, np.ndarray], mode: TensorExpression
     ) -> float:
         """Contract tensors according to the computing sequence."""
         tensor_dict = tensor_dict.copy()
         if len(mode) == 0:
             return np.prod(list(tensor_dict.values()))
-
-        while len(mode.indexes) > 0:
-            contract_index = mode.next_contract()
-            contract_indices, save_position, contract_compute = mode.contract(
-                contract_index
-            )
-            tensor_dict[save_position] = self.summor(
-                contract_compute, *[tensor_dict[i] for i in contract_indices]
-            )
-
-            contract_indices.remove(save_position)
-            for indice in contract_indices:
-                tensor_dict.pop(indice)
 
         return np.prod(list(tensor_dict.values()))
 

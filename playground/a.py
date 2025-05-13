@@ -1,20 +1,26 @@
-from init import *
+from U_stats.tensor_contraction.path import TensorExpression
 
-n = 100
-A = np.random.rand(n, n)
+mode = [["i", "j"], ["j", "k"], ["k", "l"]]
 
-print(A.shape)
-vstater = U_stats.statistics.U_statistics.UStatsCalculator(mode=["ij", "ij"])
-vstats = vstater.calculate([A, A])
+te = TensorExpression(mode)
+print(te._pair_dict)
+print(te._indices)
+print(te.index_number)
 
-ustat_loop = U_stats.statistics.U_statistics.U_stats_loop(
-    [A, A], [["i", "j"], ["i", "j"]]
-)
-print((vstats - ustat_loop) / ustat_loop)
+path1, cost1 = te.greedy_search()
+# print(path1)
+# print(cost1)
 
-# import U_stats.statistics.U2V as U2V
+# path2, cost2 = te.branch_and_bound_search()
+# print(path2)
+# print(cost2)
 
-# g = U2V.get_all_partitions({"i", "j"})
-# for i in g:
-#     print(i)
-#     print(U2V.partition_weight(i))
+# path3, cost3 = te.exhausive_search_space()
+# print(path3)
+# print(cost3)
+
+path1 = te.computing_representation_path(path1)
+print(path1)
+print(path1[0])
+print(path1[1])
+print(path1[2])

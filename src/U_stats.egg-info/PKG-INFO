@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: U_stats
+Version: 0.1
+Summary: A Python package for U-Statistics calculation
+Author: Zhang Ruiqi
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Provides-Extra: test
+Requires-Dist: pytest>=7.0; extra == "test"
+Requires-Dist: pytest-cov; extra == "test"
+Dynamic: license-file
