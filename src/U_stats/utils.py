@@ -1,19 +1,44 @@
 ### some useful functions
 from collections import defaultdict
-from typing import List, Tuple, Union, Callable, Optional
+from typing import List, Tuple, Union, Callable, Optional, Any
 import string, re
 import numpy as np
 import threading
 from queue import Queue
 import queue
 import logging
+import time
+from contextlib import ContextDecorator
+from functools import wraps
 
-AB_table = list(string.ascii_lowercase)
+_English_alphabet = string.ascii_lowercase + string.ascii_uppercase
 
-# __all__ = [
-#     "standardize_indexes",
-#     "numbers_to_letters",
-# ]
+
+# similar to opt_einsum
+class Alphabet:
+    _instance = None
+    _initialized = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if not Alphabet._initialized:
+            self._alphabet = _English_alphabet
+            Alphabet._initialized = True
+
+    def __getitem__(self, i: int) -> str:
+        if i < 52:
+            return self._alphabet[i]
+        elif i >= 55296:
+            return chr(i + 2048)
+        else:
+            return chr(i + 140)
+
+
+AB_table = Alphabet()
 
 
 # This function is to generate the reverse mapping of a dictionary
@@ -115,8 +140,8 @@ def numbers_to_letters(numbers: List[int] | List[List[int]]) -> Tuple[List[str],
                     "Input must be a list of integers or list of integer lists"
                 )
         return result, letter_to_number
-    except IndexError:
-        raise ValueError("Number in input exceeds alphabet size (26)")
+    except IndexError as e:
+        raise ValueError(e)
 
 
 def dedup(strings: str | list) -> str:
@@ -377,3 +402,33 @@ def einsum_expression_to_mode(expression: str) -> Tuple[str, str]:
     lhs, rhs = expression.split("->")
     lhs_modes = lhs.split(",")
     return lhs_modes, rhs
+
+
+class Timer(ContextDecorator):
+    def __init__(self, name: Optional[str] = None, logger: Optional[Callable] = print):
+        self.name = name or "Task"
+        self.logger = logger
+        self.start_time = None
+        self.end_time = None
+        self.elapsed = None
+
+    def __enter__(self):
+        self.start_time = time.perf_counter()
+        return self
+
+    def __exit__(self, *exc):
+        self.end_time = time.perf_counter()
+        self.elapsed = self.end_time - self.start_time
+        self.logger(f"{self.name} using: {self.elapsed:.3f} seconds")
+        return False
+
+    def __call__(self, func: Callable) -> Callable:
+        if self.name is None:
+            self.name = func.__name__
+
+        @wraps(func)
+        def wrapped(*args, **kwargs) -> Any:
+            with self:
+                return func(*args, **kwargs)
+
+        return wrapped

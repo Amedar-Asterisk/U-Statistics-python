@@ -1,11 +1,20 @@
 from .mode import _StandardizedMode
+import warnings
 from functools import cached_property
-from typing import List, Tuple, Dict, Set, Union, Hashable
+from typing import List, Tuple, Dict, Set, Union, Hashable, Optional
 import itertools
 import numpy as np
 from copy import deepcopy
 from dataclasses import dataclass
-from ..utils import numbers_to_letters, strings2format
+from ..utils import numbers_to_letters, strings2format, einsum_expression_to_mode
+
+try:
+    import opt_einsum as oe
+except ImportError:
+    oe = None
+    warnings.warn(
+        "opt_einsum is not installed. Some functionalities may not work as expected."
+    )
 
 NestedHashableList = List[Union[str, List[Hashable]]]
 
@@ -104,6 +113,8 @@ class _IndexRegistry:
 
 
 class TensorExpression:
+
+    __size: int = 10**4
 
     def __init__(self, mode: NestedHashableList):
         if mode is not None:
@@ -287,7 +298,12 @@ class TensorExpression:
                 break
             cost_vector = np.sum(adj_matrix, axis=0) - 1
             min_cost_position = np.argmin(cost_vector)
-            min_cost = cost_vector[min_cost_position]
+            min_cost = np.min(cost_vector)
+            min_cost_positions = np.where(cost_vector == min_cost)[0]
+            if len(min_cost_positions) > 1:
+                min_cost_position = np.random.choice(min_cost_positions)
+            else:
+                min_cost_position = min_cost_positions[0]
             min_index = indices[min_cost_position]
             path.append(min_index)
             indices.pop(min_cost_position)
@@ -323,25 +339,25 @@ class TensorExpression:
                 pair_dict.pop(position)
         return computing_path
 
-    def path(self, method: str = "greedy") -> Tuple[List[int], int]:
-        """
-        Get the optimal contraction path and its cost.
-
-        Args:
-            method (str): The method to use for finding the path. Options are:
-                          'exhaustive', 'greedy', 'bb' (branch and bound).
-
-        Returns:
-            Tuple[List[int], int]: A tuple containing the optimal contraction path
-                                   and its cost.
-        """
+    def path(self, method: str = "greedy") -> Tuple[List[Tuple[List[int], str]], int]:
         if method not in self._METHOD_:
             raise ValueError(
                 f"Invalid method: {method}. Available methods are: {list(self._METHOD_.keys())}"
             )
         index_path, cost = self._METHOD_[method](self)
         computing_path = self.computing_representation_path(index_path)
+
         return computing_path, cost
+
+    def tupled_path(
+        self, method: str = "greedy", analyze: bool = False, optimize: bool = False
+    ) -> str:
+        path, _ = self.path(method)
+        return self.tuplelize_path(
+            path,
+            optimize=optimize,
+            analyze=analyze,
+        )
 
     @staticmethod
     def _construct_index_mapping(indices: List[int]) -> callable:
@@ -414,6 +430,35 @@ class TensorExpression:
             return strings2format(pairs[:-1], pairs[-1]), [
                 mapping[i] for i in pairs[-1]
             ]
+
+    @staticmethod
+    def tuplelize_path(
+        computing_path: List[Tuple[List[int], str]],
+        optimize: Optional[str] = False,
+        analyze: Optional[str] = False,
+    ) -> str:
+        path = []
+        if analyze:
+            flop_count = 0
+            intermediate_size = 0
+        for positions, computing_format in computing_path:
+            lhsmodes, _ = einsum_expression_to_mode(computing_format)
+            shapes = [(TensorExpression.__size,) * len(lhsmode) for lhsmode in lhsmodes]
+            subpath, subpath_info = oe.contract_path(
+                computing_format,
+                *shapes,
+                optimize=optimize,
+                shapes=True,
+            )
+            path.append((positions, subpath))
+            if analyze:
+                flop_count += subpath_info.opt_cost
+                intermediate_size = max(
+                    intermediate_size, subpath_info.largest_intermediate
+                )
+        if analyze:
+            return path, (flop_count, intermediate_size)
+        return path
 
     def _construct_adj_matrix(self):
         num = len(self.indices)

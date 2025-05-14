@@ -54,7 +54,13 @@ def virtual_tensors(shapes: list) -> list:
     return [np.random.rand(*shape) for shape in shapes]
 
 
-# def test3():
+class VirtualTensor:
+    def __init__(self, shape):
+        self.shape = shape
+        self.data = None
+
+    def __repr__(self):
+        return f"VirtualTensor(shape={self.shape})"
 
 
 if __name__ == "__main__":
