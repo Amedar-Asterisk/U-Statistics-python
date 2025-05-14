@@ -1,3 +1,2 @@
-import statistics
-
-__all__ = statistics.__all__
+__version__ = "0.1.0"
+__author__ = "Zhang RuiQi"

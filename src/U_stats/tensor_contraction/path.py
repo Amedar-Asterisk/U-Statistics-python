@@ -9,12 +9,6 @@ from ..utils import numbers_to_letters, strings2format
 
 NestedHashableList = List[Union[str, List[Hashable]]]
 
-__METHOD__ = {
-    "exhaustive_search": TensorExpression.exhausive_search_space,
-    "greedy_search": TensorExpression.greedy_search,
-    "branch_and_bound_search": TensorExpression.branch_and_bound_search,
-}
-
 
 @dataclass
 class _IndexRegistry:
@@ -84,15 +78,17 @@ class _IndexRegistry:
             if not self._location_map[index]:
                 del self._location_map[index]
 
-    def merge(self, int_set: List[int], objective: int) -> None:
+    def merge(self, int_set: List[int] | int, objective: int) -> None:
         if objective not in self._location_map:
             self._location_map[objective] = set()
+        if isinstance(int_set, int):
+            int_set = [int_set]
         for c in int_set:
             if c in self._location_map:
                 positions = self._location_map.pop(c)
                 self._location_map[objective].update(positions)
 
-    def locations(self, index: int) -> Set[int]:
+    def locations(self, index: int) -> List[int]:
         """
         Get all positions where an index appears.
 
@@ -104,23 +100,16 @@ class _IndexRegistry:
                      Returns empty set if index doesn't exist.
 
         """
-        return self._location_map.get(index, set())
+        return sorted(list(self._location_map.get(index, set())))
 
 
 class TensorExpression:
-    __slots__ = [
-        "_pair_dict",
-        "_index_table",
-        "_adj_matrix",
-        "_indices",
-        "_indices_mapping",
-        "_position_number",
-    ]
 
     def __init__(self, mode: NestedHashableList):
         if mode is not None:
             mode: _StandardizedMode = _StandardizedMode(mode)
             self._position_number = len(mode)
+            self.shape = mode.shape
             pair_dict = dict.fromkeys(range(len(mode)), None)
             for i, pair in enumerate(mode._data):
                 if len(pair) > 0:
@@ -130,26 +119,23 @@ class TensorExpression:
             for i, pair in self._pair_dict.items():
                 for index in pair:
                     self._index_table.append(index, i)
-            self._indices = sorted(list(self._index_table.indices))
-            self._indices_mapping = self._construct_index_mapping(self._indices)
-            self._adj_matrix = self._construct_adj_matrix()
+
         else:
             self._pair_dict = {}
             self._index_table = _IndexRegistry()
-            self._indices_mapping = {}
             self._position_number = 0
-            self._indices = []
-            self._adj_matrix = None
+            self.shape = None
 
     def copy(self):
         new_state = TensorExpression(None)
-        new_state._pair_dict = self._pair_dict.copy()
+        new_state._pair_dict = deepcopy(self._pair_dict)
         new_state._index_table = self._index_table.copy()
-        new_state._indices_mapping = self._indices_mapping
+        new_state.shape = self.shape
         new_state._position_number = self._position_number
-        new_state._indices = self._indices.copy()
-        new_state._adj_matrix = self._adj_matrix.copy()
         return new_state
+
+    def __str__(self):
+        return f"TensorExpression({[str(self._pair_dict[i]) for i in self.indices]})"
 
     def __getitem__(self, index: int) -> List[int]:
         """
@@ -164,13 +150,21 @@ class TensorExpression:
         """
         return self._pair_dict.get(index, [])
 
-    @property
+    @cached_property
     def indices(self) -> List[int]:
-        return self._indices.copy()
+        return sorted(list(self._index_table.indices))
+
+    @cached_property
+    def _indices_mapping(self) -> Dict[int, int]:
+        return self._construct_index_mapping(self.indices)
+
+    @cached_property
+    def _adj_matrix(self) -> np.ndarray:
+        return self._construct_adj_matrix()
 
     @property
     def index_number(self) -> int:
-        return len(self._indices)
+        return len(self.indices)
 
     def positions(self, index: int) -> Set[int]:
         return self._index_table.locations(index)
@@ -180,7 +174,7 @@ class TensorExpression:
         return self._bool_vector(set(indices_rep), self.index_number)
 
     def evaluate(self, path: List[int]) -> int:
-        indices = self._indices.copy()
+        indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
         max_cost = 0
         for index in path:
@@ -189,16 +183,16 @@ class TensorExpression:
                 break
             mapping = self._construct_index_mapping(indices)
             position = mapping(index)
-            cost = self._degtree(adj_matrix, position)
+            cost = self._degree(adj_matrix, position)
             adj_matrix = self._eliminate_index_(adj_matrix, position)
             indices.remove(index)
             max_cost = max(max_cost, cost)
         return max_cost
 
-    def exhausive_search_space(self) -> Tuple[List[int], int]:
+    def exhaustive_search_space(self) -> Tuple[List[int], int]:
         min_cost = self.index_number
         best_path = None
-        for ordering in itertools.permutations(self._indices):
+        for ordering in itertools.permutations(self.indices):
             cost = self.evaluate(ordering)
             if cost < min_cost:
                 min_cost = cost
@@ -206,7 +200,7 @@ class TensorExpression:
         return best_path, min_cost
 
     def branch_and_bound_search(self) -> Tuple[List[int], int]:
-        if not self._indices:
+        if not self.indices:
             return [], 0
 
         def backtrack(
@@ -234,7 +228,7 @@ class TensorExpression:
 
             for i, index in enumerate(indices):
                 position = index_mapping(index)
-                cost = self._degtree(adj_matrix, position)
+                cost = self._degree(adj_matrix, position)
                 max_cost = max(current_cost, cost)
 
                 if max_cost >= min_cost:
@@ -264,7 +258,7 @@ class TensorExpression:
                 adj_matrix = old_matrix
 
         best_path, min_cost = self.greedy_search()
-        initial_indices = list(self._indices)
+        initial_indices = list(self.indices)
         initial_matrix = self._adj_matrix.copy()
         initial_mapping = self._construct_index_mapping(initial_indices)
 
@@ -274,13 +268,13 @@ class TensorExpression:
     def greedy_search(self) -> Tuple[List[int], int]:
         cost = 0
         path = []
-        indices = self._indices.copy()
+        indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
         index_mapping = self._construct_index_mapping(indices)
         for index in indices:
             if len(self.positions(index)) == 1:
                 position = index_mapping(index)
-                cost = max(cost, self._degtree(adj_matrix, position))
+                cost = max(cost, self._degree(adj_matrix, position))
                 adj_matrix = self._delete_index_(adj_matrix, position)
                 indices.remove(index)
                 path.append(index)
@@ -304,7 +298,7 @@ class TensorExpression:
 
     def computing_representation_path(
         self, path: List[int]
-    ) -> List[Tuple[int, Set[int], str]]:
+    ) -> List[Tuple[List[int], str]]:
         computing_path = []
         registry = self._index_table.copy()
         pair_dict = self._pair_dict.copy()
@@ -316,7 +310,7 @@ class TensorExpression:
             computing_format, output_expression = self._pairs_to_format(
                 processing_pairs, result_pair=result_pair
             )
-            computing_path.append((index, positions, computing_format))
+            computing_path.append((positions, computing_format))
             if output_expression is not None:
                 for index in output_expression:
                     for position in positions:
@@ -328,6 +322,26 @@ class TensorExpression:
             for position in positions:
                 pair_dict.pop(position)
         return computing_path
+
+    def path(self, method: str = "greedy") -> Tuple[List[int], int]:
+        """
+        Get the optimal contraction path and its cost.
+
+        Args:
+            method (str): The method to use for finding the path. Options are:
+                          'exhaustive', 'greedy', 'bb' (branch and bound).
+
+        Returns:
+            Tuple[List[int], int]: A tuple containing the optimal contraction path
+                                   and its cost.
+        """
+        if method not in self._METHOD_:
+            raise ValueError(
+                f"Invalid method: {method}. Available methods are: {list(self._METHOD_.keys())}"
+            )
+        index_path, cost = self._METHOD_[method](self)
+        computing_path = self.computing_representation_path(index_path)
+        return computing_path, cost
 
     @staticmethod
     def _construct_index_mapping(indices: List[int]) -> callable:
@@ -369,7 +383,7 @@ class TensorExpression:
         return result
 
     @staticmethod
-    def _degtree(adj_matrix: np.ndarray, index: int) -> int:
+    def _degree(adj_matrix: np.ndarray, index: int) -> int:
         vector = adj_matrix[index]
         return np.sum(vector) - 1
 
@@ -382,7 +396,7 @@ class TensorExpression:
                 return max(max_degree, adj_matrix.shape[0] - 1)
             vector = np.sum(adj_matrix, axis=0)
             index = np.argmin(vector)
-            degree = TensorExpression._degtree(adj_matrix, index)
+            degree = TensorExpression._degree(adj_matrix, index)
             max_degree = max(max_degree, degree)
             adj_matrix = TensorExpression._delete_index_(adj_matrix, index)
 
@@ -402,9 +416,15 @@ class TensorExpression:
             ]
 
     def _construct_adj_matrix(self):
-        num = len(self._indices)
+        num = len(self.indices)
         adj_matrix = np.zeros((num, num), dtype=bool)
         for pair in self._pair_dict.values():
             vector = self._pair_vector(pair)
             adj_matrix = np.logical_or(adj_matrix, np.outer(vector, vector))
         return adj_matrix
+
+    _METHOD_ = {
+        "exhaustive": exhaustive_search_space,
+        "greedy": greedy_search,
+        "bb": branch_and_bound_search,
+    }

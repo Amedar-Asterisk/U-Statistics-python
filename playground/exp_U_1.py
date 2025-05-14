@@ -144,4 +144,4 @@ def test2(n, m, summor="numpy"):
 
 
 if __name__ == "__main__":
-    test1(100, 4, summor="numpy")
+    test2(10, 4, summor="numpy")

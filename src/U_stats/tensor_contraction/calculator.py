@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
-from .path import TensorExpression
-from typing import List, Dict, Tuple, Union, Callable, Hashable
+from .path import TensorExpression, NestedHashableList
+from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
 
 try:
     import torch
@@ -19,7 +19,7 @@ except ImportError as e:
     )
     oe = None
 
-__BACKEND__ = {"numpy": np.einsum, "torch": torch.einsum, "oe": oe.contract}
+BACKEND = {"numpy": np.einsum, "torch": torch.einsum, "oe": oe.contract}
 
 
 class TensorContractionCalculator:
@@ -38,11 +38,11 @@ class TensorContractionCalculator:
 
     def _initialize_summor(self, summor: str) -> Callable:
         """Set up the tensor contraction function."""
-        if summor in __BACKEND__:
-            return __BACKEND__[summor]
+        if summor in BACKEND:
+            return BACKEND[summor]
         else:
             raise ValueError(
-                f"Invalid summor: {summor}. Available options are: {list(__BACKEND__.keys())}"
+                f"Invalid summor: {summor}. Available options are: {list(BACKEND.keys())}"
             )
 
     def _initalize_mode(
@@ -82,37 +82,35 @@ class TensorContractionCalculator:
                 raise ValueError("The number of samples in tensors do not match.")
 
     def _tensor_contract(
-        self, tensor_dict: Dict[int, np.ndarray], mode: TensorExpression
+        self, tensor_dict: Dict[int, np.ndarray], computing_path: List[Tuple[Set, str]]
     ) -> float:
-        """Contract tensors according to the computing sequence."""
-        tensor_dict = tensor_dict.copy()
-        if len(mode) == 0:
-            return np.prod(list(tensor_dict.values()))
-
+        position_number = max(tensor_dict.keys()) + 1
+        for positions, format in computing_path:
+            tensors = [tensor_dict[i] for i in positions]
+            result = self.summor(format, *tensors)
+            for i in positions:
+                tensor_dict.pop(i)
+            tensor_dict[position_number] = result
+            position_number += 1
         return np.prod(list(tensor_dict.values()))
 
     def calculate(
         self,
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
-        mode: Union[List[List[Hashable]], List[str], TensorContractionState],
+        mode: NestedHashableList | TensorExpression,
+        path_method: str = "greedy",
+        print_cost: bool = False,
         _validate: bool = True,
         _init_mode=True,
         _init_tensor=True,
     ) -> float:
-        """
-        Compute tensor contractions iteratively.
-
-        Args:
-            tensors: Dictionary mapping indices to tensors
-            mode: Sequence of tensor contractions to perform
-
-        Returns:
-            float: Result of tensor contractions
-        """
         if _init_mode:
             mode = self._initalize_mode(mode)
         if _init_tensor:
             tensors = self._initalize_tensor_dict(tensors, mode.shape)
         if _validate:
             self._validate_inputs(tensors, mode.shape)
-        return self._tensor_contract(tensors, mode)
+        path, cost = mode.path(path_method)
+        if print_cost:
+            print(f"The max rank of complexity is {cost}.")
+        return self._tensor_contract(tensors, path)
