@@ -6,7 +6,12 @@ import itertools
 import numpy as np
 from copy import deepcopy
 from dataclasses import dataclass
-from ..utils import numbers_to_letters, strings2format, einsum_expression_to_mode
+from ..utils import (
+    numbers_to_letters,
+    strings2format,
+    einsum_expression_to_mode,
+    NestedHashableList,
+)
 
 try:
     import opt_einsum as oe
@@ -15,8 +20,6 @@ except ImportError:
     warnings.warn(
         "opt_einsum is not installed. Some functionalities may not work as expected."
     )
-
-NestedHashableList = List[Union[str, List[Hashable]]]
 
 
 @dataclass

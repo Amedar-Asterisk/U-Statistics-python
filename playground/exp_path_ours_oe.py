@@ -4,7 +4,7 @@ import opt_einsum as oe
 import einsum_benchmark as eb
 import numpy as np
 
-SIZE = 10**10
+SIZE = 10000
 
 
 def get_shapes(expr: str):
@@ -35,6 +35,9 @@ def main(oe_method: str = "greedy"):
         lhses, _ = einsum_expression_to_mode(computing_expr)
         shapes = get_shapes(computing_expr)
         check(lhses, shapes)
+        if len(lhses) > 10**4:
+            print(f"skip {ins.name} because too many tensors")
+            continue
         with Timer(name=f"oe opt for {ins.name}") as t:
             _, oes = oe.contract_path(
                 computing_expr, *shapes, optimize=oe_method, shapes=True

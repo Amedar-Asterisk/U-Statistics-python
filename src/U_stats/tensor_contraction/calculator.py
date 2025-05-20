@@ -5,21 +5,10 @@ from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
 
 try:
     import torch
-except ImportError as e:
+except ImportError:
     warnings.warn(
-        "torch is not installed. Some functionalities may not work as expected."
+        "Torch is not installed. Tensor contraction will be performed using NumPy."
     )
-    torch = None
-
-try:
-    import opt_einsum as oe
-except ImportError as e:
-    warnings.warn(
-        "opt_einsum is not installed. Some functionalities may not work as expected."
-    )
-    oe = None
-
-BACKEND = {"numpy": np.einsum, "torch": torch.einsum, "oe": oe.contract}
 
 
 class TensorContractionCalculator:
@@ -35,14 +24,20 @@ class TensorContractionCalculator:
             summor: str, either "numpy" or "torch"
         """
         self.summor = self._initialize_summor(summor)
+        self.summor_name = summor
 
     def _initialize_summor(self, summor: str) -> Callable:
         """Set up the tensor contraction function."""
-        if summor in BACKEND:
-            return BACKEND[summor]
+        if summor == "numpy":
+            return np.einsum
+        elif summor == "torch":
+            import torch
+
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            return torch.einsum
         else:
             raise ValueError(
-                f"Invalid summor: {summor}. Available options are: {list(BACKEND.keys())}"
+                f"Invalid summor: {summor}. It should be either 'numpy' or 'torch'."
             )
 
     def _initalize_mode(
@@ -56,14 +51,30 @@ class TensorContractionCalculator:
         shape: Tuple[int, ...],
     ) -> Dict[int, np.ndarray]:
         """Initialize the tensor dictionary."""
+        if self.summor_name == "torch":
+            import torch
 
-        if isinstance(tensors, list):
-            return {i: tensor for i, tensor in enumerate(tensors) if shape[i] > 0}
-        elif isinstance(tensors, dict):
-            return {i: tensor for i, tensor in tensors.items() if shape[i] > 0}
-        raise ValueError(
-            f"Invalid input: tensors must be a list or a dictionary but it is {type(tensors)}."
-        )
+            if isinstance(tensors, list):
+                tensors = {
+                    i: self._to_device(tensor)
+                    for i, tensor in enumerate(tensors)
+                    if shape[i] > 0
+                }
+            elif isinstance(tensors, dict):
+                tensors = {
+                    i: self._to_device(tensor)
+                    for i, tensor in tensors.items()
+                    if shape[i] > 0
+                }
+            return tensors
+        elif self.summor_name == "numpy":
+            if isinstance(tensors, list):
+                return {i: tensor for i, tensor in enumerate(tensors) if shape[i] > 0}
+            elif isinstance(tensors, dict):
+                return {i: tensor for i, tensor in tensors.items() if shape[i] > 0}
+            raise ValueError(
+                f"Invalid input: tensors must be a list or a dictionary but it is {type(tensors)}."
+            )
 
     def _validate_inputs(
         self,
@@ -114,3 +125,6 @@ class TensorContractionCalculator:
         if print_cost:
             print(f"The max rank of complexity is {cost}.")
         return self._tensor_contract(tensors, path)
+
+    def _to_device(self, tensor: np.ndarray | torch.Tensor) -> torch.Tensor:
+        return torch.tensor(tensor, dtype=torch.float32).to(self.device)

@@ -1,6 +1,6 @@
 ### some useful functions
 from collections import defaultdict
-from typing import List, Tuple, Union, Callable, Optional, Any
+from typing import List, Tuple, Union, Callable, Optional, Any, Dict, Set, Hashable
 import string, re
 import numpy as np
 import threading
@@ -10,6 +10,8 @@ import logging
 import time
 from contextlib import ContextDecorator
 from functools import wraps
+
+NestedHashableList = List[Union[str, List[Hashable]]]
 
 _English_alphabet = string.ascii_lowercase + string.ascii_uppercase
 
@@ -402,6 +404,29 @@ def einsum_expression_to_mode(expression: str) -> Tuple[str, str]:
     lhs, rhs = expression.split("->")
     lhs_modes = lhs.split(",")
     return lhs_modes, rhs
+
+
+def get_adj_list(mode: NestedHashableList) -> Dict[int, Set[int]]:
+    """
+    Convert a mode list to an adjacency list representation.
+
+    Args:
+        mode (NestedHashableList): The mode list to convert.
+
+    Returns:
+        Dict[int, Set[int]]: The adjacency list representation of the mode.
+    """
+    vertices = set()
+    for pair in mode:
+        vertices.update(set(pair))
+    adj_list = dict()
+    for index in vertices:
+        adj_list[index] = set()
+        for pair in mode:
+            if index in pair:
+                adj_list[index].update(pair)
+        adj_list[index].discard(index)
+    return adj_list
 
 
 class Timer(ContextDecorator):
