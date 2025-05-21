@@ -11,6 +11,7 @@ from ..utils import (
     strings2format,
     einsum_expression_to_mode,
     NestedHashableList,
+    calculate_k
 )
 
 try:
@@ -315,6 +316,125 @@ class TensorExpression:
 
         return path, cost
 
+
+    def greedy_plus_search(self) -> Tuple[List[int], int]:
+
+        cost = 0
+        path = []
+        indices = self.indices.copy()
+        adj_matrix = self._adj_matrix.copy()
+        index_mapping = self._construct_index_mapping(indices)
+
+        # 预处理：消除只出现在一个位置的 index
+        for index in indices.copy():
+            if len(self.positions(index)) == 1:
+                position = index_mapping(index)
+                cost = max(cost, self._degree(adj_matrix, position))
+                adj_matrix = self._delete_index_(adj_matrix, position)
+                indices.remove(index)
+                path.append(index)
+                index_mapping = self._construct_index_mapping(indices)
+
+        # 初始边数，用于计算 k 值
+        e = np.sum(adj_matrix) // 2
+        k = calculate_k(e)
+        max_allowed_degree = k - 1
+
+        while indices:
+            if adj_matrix.all():
+                cost = max(cost, len(indices) - 1)
+                path += indices
+                break
+
+            candidates = []
+            for pos, index in enumerate(indices):
+                neighbors = np.where(adj_matrix[pos])[0]
+                degree = len(neighbors)
+                existing_edges = 0
+                for i in range(len(neighbors)):
+                    for j in range(i + 1, len(neighbors)):
+                        if adj_matrix[neighbors[i], neighbors[j]]:
+                            existing_edges += 1
+                potential_edges = degree * (degree - 1) // 2
+                reduction_cost = -degree + (potential_edges - existing_edges)
+                candidates.append((pos, index, degree, reduction_cost))
+
+            # 策略选择
+            neg_cost_nodes = [(p, i, d, c) for p, i, d, c in candidates if c < 0]
+            nonneg_cost_nodes = [(p, i, d, c) for p, i, d, c in candidates if c >= 0 and d <= max_allowed_degree]
+
+            if neg_cost_nodes:
+                pos, index, deg, _ = min(neg_cost_nodes, key=lambda x: (x[2], x[3]))  # 最小度优先
+            elif nonneg_cost_nodes:
+                pos, index, deg, cst = max(nonneg_cost_nodes, key=lambda x: (-x[3], x[2]))  # cost 最小中度数最大
+            else:
+                fallback = [(p, i, d, c) for p, i, d, c in candidates if c >= 0]
+                if fallback:
+                    pos, index, deg, _ = min(fallback, key=lambda x: (x[3], -x[2]))
+                else:
+                    break  # 无合法节点
+
+            path.append(index)
+            cost = max(cost, deg)
+            adj_matrix = self._eliminate_index_(adj_matrix, pos)
+            indices.pop(pos)
+            index_mapping = self._construct_index_mapping(indices)
+
+        return path, cost
+
+
+
+    def greedy_minor_search(self) -> Tuple[List[int], int]:
+        cost = 0
+        path = []
+        indices = self.indices.copy()
+        adj_matrix = self._adj_matrix.copy()
+        index_mapping = self._construct_index_mapping(indices)
+
+        for index in indices.copy():
+            if len(self.positions(index)) == 1:
+                position = index_mapping(index)
+                cost = max(cost, self._degree(adj_matrix, position))
+                adj_matrix = self._delete_index_(adj_matrix, position)
+                indices.remove(index)
+                path.append(index)
+                index_mapping = self._construct_index_mapping(indices)
+
+        while indices:
+            candidates = []
+
+            for i, index in enumerate(indices):
+                degree = self._degree(adj_matrix, i)
+                neighbors = np.where(adj_matrix[i])[0]
+                existing_edges = sum(
+                    adj_matrix[u, v] for u in neighbors for v in neighbors if u < v
+                )
+                potential_edges = degree * (degree - 1) // 2
+                cost_val = -degree + (potential_edges - existing_edges)
+                candidates.append((i, index, degree, cost_val))
+
+            neg_cost = [(i, index, deg, c) for i, index, deg, c in candidates if c < 0]
+            pos_cost = [(i, index, deg, c) for i, index, deg, c in candidates if c >= 0]
+
+            if neg_cost:
+                # 策略1：cost<0 且度数最小
+                chosen = min(neg_cost, key=lambda x: (x[2], x[3]))
+            else:
+                # 策略2：先度数最小，其次cost最小
+                chosen = min(pos_cost, key=lambda x: (x[2], x[3]))
+
+            i, index, degree, _ = chosen
+            cost = max(cost, degree)
+            path.append(index)
+            adj_matrix = self._eliminate_index_(adj_matrix, i)
+            indices.pop(i)
+            index_mapping = self._construct_index_mapping(indices)
+
+        return path, cost
+
+
+
+
     def computing_representation_path(
         self, path: List[int]
     ) -> List[Tuple[List[int], str]]:
@@ -342,7 +462,7 @@ class TensorExpression:
                 pair_dict.pop(position)
         return computing_path
 
-    def path(self, method: str = "greedy") -> Tuple[List[Tuple[List[int], str]], int]:
+    def path(self, method: str = "greedy_plus") -> Tuple[List[Tuple[List[int], str]], int]:
         if method not in self._METHOD_:
             raise ValueError(
                 f"Invalid method: {method}. Available methods are: {list(self._METHOD_.keys())}"
@@ -353,7 +473,7 @@ class TensorExpression:
         return computing_path, cost
 
     def tupled_path(
-        self, method: str = "greedy", analyze: bool = False, optimize: bool = False
+        self, method: str = "greedy_plus", analyze: bool = False, optimize: bool = False
     ) -> str:
         path, _ = self.path(method)
         return self.tuplelize_path(
@@ -475,4 +595,6 @@ class TensorExpression:
         "exhaustive": exhaustive_search_space,
         "greedy": greedy_search,
         "bb": branch_and_bound_search,
+        "greedy_plus": greedy_plus_search,
+        "greedy_minor": greedy_minor_search,
     }

@@ -4,3 +4,5 @@
 paper/*
 data/*
 *.pyc
+benchmark*
+venv/

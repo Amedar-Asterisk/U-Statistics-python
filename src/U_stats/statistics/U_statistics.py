@@ -86,7 +86,7 @@ class UStatsCalculator(TensorContractionCalculator):
         self.shape = self.mode.shape
 
     def calculate(
-        self, tensors: List[np.ndarray], average=True, path_method="greedy"
+        self, tensors: List[np.ndarray], average=True, path_method="greedy_minor"
     ) -> float:
         """
         Calculate the U statistics of a list of kernel matrices(tensors) with particular mode.
@@ -112,7 +112,7 @@ class UStatsCalculator(TensorContractionCalculator):
         return result
 
     def caculate_non_diag(
-        self, tensors: List[np.ndarray], average=True, path_method="greedy"
+        self, tensors: List[np.ndarray], average=True, path_method="greedy_minor"
     ) -> float:
         """
         Calculate the U statistics of a list of kernel matrices(tensors) with particular mode.
@@ -210,6 +210,7 @@ def U_stats(
     mode: NestedHashableList,
     average=True,
     summor: str = "numpy",
+    path_method: str = "greedy_minor",
 ) -> float:
     """
     Calculate the U statistics of a list of kernel matrices(tensors) with particular mode.
@@ -223,7 +224,7 @@ def U_stats(
     Returns:
         float, the U statistics of the kernel matrices
     """
-    return UStatsCalculator(mode, summor=summor).calculate(tensors, average)
+    return UStatsCalculator(mode, summor=summor).calculate(tensors, average, path_method)
 
 
 def U_stats_loop(tensors: List[np.ndarray], mode: List[List[int]]) -> float:

@@ -8,6 +8,7 @@ from queue import Queue
 import queue
 import logging
 import time
+import math
 from contextlib import ContextDecorator
 from functools import wraps
 
@@ -457,3 +458,12 @@ class Timer(ContextDecorator):
                 return func(*args, **kwargs)
 
         return wrapped
+
+
+def calculate_k(e: int) -> int:
+    """计算满足 binom(k,2) <= e < binom(k+1,2) 的k值"""
+    k = int((math.sqrt(8 * e + 1) + 1)) // 2
+    while True:
+        if math.comb(k, 2) <= e < math.comb(k + 1, 2):
+            return k
+        k -= 1  
