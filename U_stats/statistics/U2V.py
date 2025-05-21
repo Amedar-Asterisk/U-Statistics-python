@@ -17,10 +17,6 @@ from typing import (
     Sequence,
     Union,
     overload,
-    Dict,
-    Tuple,
-    Optional,
-    Any,
 )
 from ..utils import *
 from ..utils import AB_table
@@ -93,36 +89,6 @@ def get_all_partitions(
         yield from partitions(elements, k)
 
 
-def get_all_partitions_nonconnected(
-    adj_list: Dict[int, Set[Hashable]],
-) -> Generator[List[Set[Union[int, T]]], None, None]:
-    vertices = list(adj_list.keys())
-    graph = adj_list
-
-    def backtrack(
-        unassigned: List[Hashable], current_partition: List[Set[Hashable]]
-    ) -> Generator[List[Set[Hashable]], None, None]:
-        if not unassigned:
-            yield [set(part) for part in current_partition]
-            return
-
-        vertex = unassigned[0]
-        remaining = unassigned[1:]
-
-        for i in range(len(current_partition)):
-            part = current_partition[i]
-            if not any(neighbor in part for neighbor in graph[vertex]):
-                part.add(vertex)
-                yield from backtrack(remaining, current_partition)
-                part.remove(vertex)
-
-        current_partition.append({vertex})
-        yield from backtrack(remaining, current_partition)
-        current_partition.pop()
-
-    yield from backtrack(vertices, [])
-
-
 def encoding_func(mode: List[List[int]]) -> Callable[[List[Set[int]]], List[str]]:
     standardized_mode = standardize_indexes(mode)
 
@@ -153,17 +119,3 @@ def stirling_number(m: int, k: int) -> int:
         for j in range(1, k + 1):
             dp[i][j] = j * dp[i - 1][j] + dp[i - 1][j - 1]
     return dp[m][k]
-
-
-def bell_number(n):
-    bell = [[0 for _ in range(n + 1)] for _ in range(n + 1)]
-
-    bell[0][0] = 1
-
-    for i in range(1, n + 1):
-        bell[i][0] = bell[i - 1][i - 1]
-
-        for j in range(1, i + 1):
-            bell[i][j] = bell[i - 1][j - 1] + bell[i][j - 1]
-
-    return bell[n][0]

@@ -1,10 +1,10 @@
-from typing import List, Tuple, Dict, Set, Union, Hashable
+from typing import List, Union, Hashable, Tuple
 from ..utils import standardize_indexes, numbers_to_letters
 from dataclasses import dataclass
 
 
 @dataclass
-class _Mode:
+class Mode:
     _data: Tuple[Union[str, Tuple[Hashable, ...]], ...]
 
     def __post_init__(self):
@@ -51,7 +51,10 @@ class _Mode:
         return self._data[index]
 
 
-class _StandardizedMode(_Mode):
+class StandardizedMode(Mode):
     def __init__(self, mode: List[Union[str, List[Hashable]]]):
-        standardized_data = standardize_indexes(mode)
+        standardized_data = numbers_to_letters(standardize_indexes(mode))
         super().__init__(standardized_data)
+
+    def __hash__(self):
+        return hash(tuple(self._data))
