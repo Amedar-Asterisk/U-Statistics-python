@@ -1,19 +1,47 @@
 ### some useful functions
 from collections import defaultdict
-from typing import List, Tuple, Union, Callable, Optional
+from typing import List, Tuple, Union, Callable, Optional, Any, Dict, Set, Hashable
 import string, re
 import numpy as np
 import threading
 from queue import Queue
 import queue
 import logging
+import time
+import math
+from contextlib import ContextDecorator
+from functools import wraps
 
-AB_table = list(string.ascii_lowercase)
+NestedHashableList = List[Union[str, List[Hashable]]]
 
-# __all__ = [
-#     "standardize_indexes",
-#     "numbers_to_letters",
-# ]
+_English_alphabet = string.ascii_lowercase + string.ascii_uppercase
+
+
+# similar to opt_einsum
+class Alphabet:
+    _instance = None
+    _initialized = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if not Alphabet._initialized:
+            self._alphabet = _English_alphabet
+            Alphabet._initialized = True
+
+    def __getitem__(self, i: int) -> str:
+        if i < 52:
+            return self._alphabet[i]
+        elif i >= 55296:
+            return chr(i + 2048)
+        else:
+            return chr(i + 140)
+
+
+AB_table = Alphabet()
 
 
 # This function is to generate the reverse mapping of a dictionary
@@ -64,40 +92,59 @@ def standardize_indexes(lst: list) -> List[List[int]]:
     return standardized_lst
 
 
-def numbers_to_letters(numbers: List[int] | List[List[int]]) -> List[str]:
+def numbers_to_letters(numbers: List[int] | List[List[int]]) -> Tuple[List[str], dict]:
     """
-    Convert numbers or lists of numbers to corresponding letters or letter combinations.
+    Convert numbers or lists of numbers to corresponding letters or letter combinations,
+    and return a mapping from letters back to numbers.
 
     Args:
         numbers (List[int] | List[List[int]]): List of integers or list of integer lists
             Each integer is converted to corresponding lowercase letter (0->a, 1->b, etc)
 
     Returns:
-        List[str]: List of converted letters or letter combinations
+        Tuple[List[str], dict]: A tuple containing:
+            - List of converted letters or letter combinations
+            - Dictionary mapping letters back to their original numbers
 
     Raises:
         TypeError: If input is not a list of integers or list of integer lists
+        ValueError: If any number exceeds alphabet size (26)
 
     Example:
-        >>> numbers_to_letters([0, 1, 2])
+        >>> letters, mapping = numbers_to_letters([0, 1, 2])
+        >>> letters
         ['a', 'b', 'c']
-        >>> numbers_to_letters([[0, 1], [2, 3]])
+        >>> mapping
+        {'a': 0, 'b': 1, 'c': 2}
+        >>> letters, mapping = numbers_to_letters([[0, 1], [2, 3]])
+        >>> letters
         ['ab', 'cd']
+        >>> mapping
+        {'a': 0, 'b': 1, 'c': 2, 'd': 3}
     """
     try:
         result = []
+        letter_to_number = {}
+
         for lst in numbers:
             if isinstance(lst, int):
-                result.append(AB_table[lst])
-            elif isinstance(lst, list):
-                result.append("".join(AB_table[num] for num in lst))
+                letter = AB_table[lst]
+                result.append(letter)
+                letter_to_number[letter] = lst
+            elif isinstance(lst, list | tuple):
+                combined = ""
+                for num in lst:
+                    letter = AB_table[num]
+                    combined += letter
+                    letter_to_number[letter] = num
+                result.append(combined)
             else:
                 raise TypeError(
                     "Input must be a list of integers or list of integer lists"
                 )
-        return result
-    except IndexError:
-        raise ValueError("Number in input exceeds alphabet size (26)")
+        return result, letter_to_number
+    except IndexError as e:
+        raise ValueError(e)
 
 
 def dedup(strings: str | list) -> str:
@@ -343,3 +390,80 @@ class SequenceWriter:
             bool: True if the thread is running, False otherwise.
         """
         return self.thread.is_alive()
+
+
+def einsum_expression_to_mode(expression: str) -> Tuple[str, str]:
+    """
+    Convert an Einstein summation expression to a mode string.
+
+    Args:
+        expression (str): The Einstein summation expression (e.g., 'ij,jk->ik').
+
+    Returns:
+        Tuple[str, str]: A tuple containing the left-hand side and right-hand side modes.
+    """
+    lhs, rhs = expression.split("->")
+    lhs_modes = lhs.split(",")
+    return lhs_modes, rhs
+
+
+def get_adj_list(mode: NestedHashableList) -> Dict[int, Set[int]]:
+    """
+    Convert a mode list to an adjacency list representation.
+
+    Args:
+        mode (NestedHashableList): The mode list to convert.
+
+    Returns:
+        Dict[int, Set[int]]: The adjacency list representation of the mode.
+    """
+    vertices = set()
+    for pair in mode:
+        vertices.update(set(pair))
+    adj_list = dict()
+    for index in vertices:
+        adj_list[index] = set()
+        for pair in mode:
+            if index in pair:
+                adj_list[index].update(pair)
+        adj_list[index].discard(index)
+    return adj_list
+
+
+class Timer(ContextDecorator):
+    def __init__(self, name: Optional[str] = None, logger: Optional[Callable] = print):
+        self.name = name or "Task"
+        self.logger = logger
+        self.start_time = None
+        self.end_time = None
+        self.elapsed = None
+
+    def __enter__(self):
+        self.start_time = time.perf_counter()
+        return self
+
+    def __exit__(self, *exc):
+        self.end_time = time.perf_counter()
+        self.elapsed = self.end_time - self.start_time
+        self.logger(f"{self.name} using: {self.elapsed:.3f} seconds")
+        return False
+
+    def __call__(self, func: Callable) -> Callable:
+        if self.name is None:
+            self.name = func.__name__
+
+        @wraps(func)
+        def wrapped(*args, **kwargs) -> Any:
+            with self:
+                return func(*args, **kwargs)
+
+        return wrapped
+
+
+def calculate_k(e: int) -> int:
+    """计算满足 binom(k,2) <= e < binom(k+1,2) 的k值"""
+    k = int((math.sqrt(8 * e + 1) + 1)) // 2
+    while True:
+        if math.comb(k, 2) <= e < math.comb(k + 1, 2):
+            return k
+        k -= 1  

@@ -4,7 +4,7 @@ import time
 from init import *
 from U_stats.statistics.U_statistics import U_stats, UStatsCalculator
 from U_stats.statistics.U_statistics import U_stats_loop
-
+import torch
 
 def produce_data(
     n: int, p: int, loc: float = 0, scale: float = 1
@@ -112,8 +112,8 @@ def prepare_tensors_mode(m: int, Ker: np.ndarray, A: np.ndarray):
 
 
 @timer
-def test_our(tensors, mode, summor="numpy"):
-    return U_stats(tensors, mode, summor=summor)
+def test_our(tensors, mode, summor="numpy", path_method="greedy_minor"):
+    return U_stats(tensors, mode, summor=summor, path_method=path_method)
 
 
 @timer
@@ -122,10 +122,11 @@ def test_loop(tensors, mode):
 
 
 @timer
-def test_nodiag(tensors, mode, summor="numpy"):
+def test_nodiag(tensors, mode, summor="numpy", path_method="greedy_minor"):
     tensors = tensors.copy()
     caculator = UStatsCalculator(mode, summor=summor)
-    return caculator.caculate_non_diag(tensors)
+    return caculator.caculate_non_diag(tensors, average=True, path_method=path_method)
+
 
 
 def test1(n, m, summor="numpy"):
@@ -175,11 +176,76 @@ def test3(n, m, summor="numpy"):
     print("time_our:", time_our)
     print("time_nodiag:", time_nodiag)
 
-
+    
 if __name__ == "__main__":
     n = 1000
-    m = 8
+    m = 5
+    print("n:", n)
+    print("m:", m)
     print("torch")
-    test3(n, m, summor="torch")
+    print(torch.__version__)
+    summor = "torch"
+    print("start assemble:")
+    tensors, assemble_time = get_input_tensor(n)
+    inputs, mode = prepare_tensors_mode(m, *tensors)
+    print("assemble_time:", assemble_time)
+    
+    
+    # print("start test_our:")
+    # path_method = "greedy_minor"
+    # print("path_method:", path_method)
+    # result_our, time_our = test_our(inputs, mode, summor=summor, path_method= path_method)
+    # print("result_our:", result_our)
+    # print("time_our:", time_our)
+    
+    # print("start test_our:")
+    # path_method = "greedy_plus"
+    # print("path_method:", path_method)
+    # result_our, time_our = test_our(inputs, mode, summor=summor, path_method= path_method)
+    # print("result_our:", result_our)
+    # print("time_our:", time_our)
+    
+    # print("start test_our:")
+    # path_method = "greedy"
+    # print("path_method:", path_method)
+    # result_our, time_our = test_our(inputs, mode, summor=summor, path_method= path_method)
+    # print("result_our:", result_our)
+    # print("time_our:", time_our)
+    
+    path_method = "greedy_minor"
+    print("start test_nodiag:")
+    print("path_method:", path_method)
+    result_nodiag, time_nodiag = test_nodiag(inputs, mode, summor=summor, path_method= path_method )
+    print("result_nodiag:", result_nodiag)
+    print("time_nodiag:", time_nodiag)
+    
+    
+    # path_method = "greedy_plus"
+    # print("start test_nodiag:")
+    # print("path_method:", path_method)
+    # result_nodiag, time_nodiag = test_nodiag(inputs, mode, summor=summor, path_method= path_method )
+    # print("result_nodiag:", result_nodiag)
+    # print("time_nodiag:", time_nodiag)
+    
+    # path_method = "greedy"
+    # print("start test_nodiag:")
+    # print("path_method:", path_method)
+    # result_nodiag, time_nodiag = test_nodiag(inputs, mode, summor=summor, path_method= path_method )
+    # print("result_nodiag:", result_nodiag)
+    # print("time_nodiag:", time_nodiag)
+    
+    # path_method = "bb"
+    # print("start test_nodiag:")
+    # print("path_method:", path_method)
+    # result_nodiag, time_nodiag = test_nodiag(inputs, mode, summor=summor, path_method= path_method )
+    # print("result_nodiag:", result_nodiag)
+    # print("time_nodiag:", time_nodiag)
+    
+    # print("start test_nodiag:")
+    # result_nodiag, time_nodiag = test_nodiag(inputs, mode, summor=summor, path_method="greedy_minor")
+    # print("result_nodiag:", result_nodiag)
+    # print("time_nodiag:", time_nodiag)
+    # test3(n, m, summor="torch")
     # print("numpy")
     # test3(n, m, summor="numpy")
+

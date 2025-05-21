@@ -1,7 +1,8 @@
-*test*
 *__pycache__/*
 *.vscode*
 .vscode/*
 paper/*
 data/*
 *.pyc
+benchmark*
+venv/
