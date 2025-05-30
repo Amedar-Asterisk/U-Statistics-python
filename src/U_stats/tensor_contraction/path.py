@@ -4,6 +4,7 @@ from functools import cached_property
 from typing import List, Tuple, Dict, Set, Union, Hashable, Optional
 import itertools
 import numpy as np
+import opt_einsum as oe
 from copy import deepcopy
 from dataclasses import dataclass
 from ..utils import (
@@ -12,14 +13,6 @@ from ..utils import (
     einsum_expression_to_mode,
     NestedHashableList,
 )
-
-try:
-    import opt_einsum as oe
-except ImportError:
-    oe = None
-    warnings.warn(
-        "opt_einsum is not installed. Some functionalities may not work as expected."
-    )
 
 
 @dataclass
@@ -149,7 +142,8 @@ class TensorExpression:
         return new_state
 
     def __str__(self):
-        return f"TensorExpression({[str(self._pair_dict[i]) for i in self.indices]})"
+        keys = sorted(self._pair_dict.keys())
+        return f"({",".join([str(self._pair_dict[key]) for key in keys])})->"
 
     def __getitem__(self, index: int) -> List[int]:
         """
@@ -203,7 +197,7 @@ class TensorExpression:
             max_cost = max(max_cost, cost)
         return max_cost
 
-    def exhaustive_search_space(self) -> Tuple[List[int], int]:
+    def exhaustive_search(self) -> Tuple[List[int], int]:
         min_cost = self.index_number
         best_path = None
         for ordering in itertools.permutations(self.indices):
@@ -285,6 +279,8 @@ class TensorExpression:
         indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
         index_mapping = self._construct_index_mapping(indices)
+
+        # first pass to remove indices with single position
         for index in indices:
             if len(self.positions(index)) == 1:
                 position = index_mapping(index)
@@ -295,16 +291,70 @@ class TensorExpression:
                 index_mapping = self._construct_index_mapping(indices)
 
         while indices:
+            # check if the adjacency matrix is a complete graph
             if adj_matrix.all():
                 cost = max(cost, len(indices) - 1)
                 path += indices
                 break
+
+            # find the indices with the minimum cost
             cost_vector = np.sum(adj_matrix, axis=0) - 1
             min_cost_position = np.argmin(cost_vector)
             min_cost = np.min(cost_vector)
             min_cost_positions = np.where(cost_vector == min_cost)[0]
+            # if there are multiple positions with the same cost, choose one randomly
             if len(min_cost_positions) > 1:
                 min_cost_position = np.random.choice(min_cost_positions)
+            else:
+                min_cost_position = min_cost_positions[0]
+            min_index = indices[min_cost_position]
+            path.append(min_index)
+            indices.pop(min_cost_position)
+            cost = max(cost, min_cost)
+            adj_matrix = self._eliminate_index_(adj_matrix, min_cost_position)
+
+        return path, cost
+
+    def double_greedy_search(self) -> Tuple[List[int], int]:
+        cost = 0
+        path = []
+        indices = self.indices.copy()
+        adj_matrix = self._adj_matrix.copy()
+        index_mapping = self._construct_index_mapping(indices)
+
+        # first pass to remove indices with single positions
+        for index in indices:
+            if len(self.positions(index)) == 1:
+                position = index_mapping(index)
+                cost = max(cost, self._degree(adj_matrix, position))
+                adj_matrix = self._delete_index_(adj_matrix, position)
+                indices.remove(index)
+                path.append(index)
+                index_mapping = self._construct_index_mapping(indices)
+
+        while indices:
+            # check if the adjacency matrix is a complete graph
+            if adj_matrix.all():
+                cost = max(cost, len(indices) - 1)
+                path += indices
+                break
+
+            # find the indices with the minimum cost
+            cost_vector = np.sum(adj_matrix, axis=0) - 1
+            min_cost_position = np.argmin(cost_vector)
+            min_cost = np.min(cost_vector)
+            min_cost_positions = np.where(cost_vector == min_cost)[0]
+
+            # find the index with the minimum fill-in from indices with the minimum cost
+            if len(min_cost_positions) > 1:
+                max_edges = 0
+                for position in min_cost_positions:
+                    vector = adj_matrix[position]
+                    mask = np.outer(vector, vector)
+                    edges = np.sum(adj_matrix[mask])
+                    if edges > max_edges:
+                        max_edges = edges
+                        min_cost_position = index
             else:
                 min_cost_position = min_cost_positions[0]
             min_index = indices[min_cost_position]
@@ -472,7 +522,7 @@ class TensorExpression:
         return adj_matrix
 
     _METHOD_ = {
-        "exhaustive": exhaustive_search_space,
+        "exhaustive": exhaustive_search,
         "greedy": greedy_search,
         "bb": branch_and_bound_search,
     }

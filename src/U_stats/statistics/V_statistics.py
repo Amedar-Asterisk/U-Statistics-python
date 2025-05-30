@@ -38,7 +38,7 @@ class VStatsCalculator(TensorContractionCalculator):
         super().__init__(summor)
         self.mode = VExpression(mode)
         self.shape = self.mode.shape
-        self.order = len(self.mode.order)
+        self.order = self.mode.order
 
     def calculate(
         self,
