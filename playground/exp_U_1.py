@@ -2,7 +2,7 @@ from typing import Tuple, List, Union, Any
 import numpy as np
 import time
 from init import *
-from U_stats.statistics.U_statistics import U_stats
+from U_stats.statistics.U_statistics import U_stats, UStatsCalculator
 from U_stats.statistics.U_statistics import U_stats_loop
 
 
@@ -121,6 +121,13 @@ def test_loop(tensors, mode):
     return U_stats_loop(tensors, mode)
 
 
+@timer
+def test_nodiag(tensors, mode, summor="numpy"):
+    tensors = tensors.copy()
+    calculator = UStatsCalculator(mode, summor=summor)
+    return calculator.calculate_non_diag(tensors)
+
+
 def test1(n, m, summor="numpy"):
     tensors, assemble_time = get_input_tensor(n)
     inputs, mode = prepare_tensors_mode(m, *tensors)
@@ -135,13 +142,44 @@ def test2(n, m, summor="numpy"):
     inputs, mode = prepare_tensors_mode(m, *tensors)
     result_loop, time_loop = test_loop(inputs, mode)
     result_our, time_our = test_our(inputs, mode, summor=summor)
+    result_nodiag, time_nodiag = test_nodiag(inputs, mode)
     print("assemble_time:", assemble_time)
     print("result_our:", result_our)
-    print("time_our:", time_our)
     print("result_loop:", result_loop)
+    print("result_nodiag:", result_nodiag)
+    print("time_our:", time_our)
+    print("time_nodiag:", time_nodiag)
     print("time_loop:", time_loop)
-    print("relative error:", np.abs(result_our - result_loop) / np.abs(result_loop))
+    print(
+        "relative error(ours):",
+        np.abs(result_our - result_loop) / np.abs(result_loop),
+    )
+    print(
+        "relative error(nodiag):",
+        np.abs(result_nodiag - result_loop) / np.abs(result_loop),
+    )
+
+
+def test3(n, m, summor="numpy"):
+    tensors, assemble_time = get_input_tensor(n)
+    inputs, mode = prepare_tensors_mode(m, *tensors)
+    result_our, time_our = test_our(inputs, mode, summor=summor)
+    result_nodiag, time_nodiag = test_nodiag(inputs, mode, summor=summor)
+    print("assemble_time:", assemble_time)
+    print("result_our:", result_our)
+    print("result_nodiag:", result_nodiag)
+    print(
+        "relative error:",
+        np.abs(result_our - result_nodiag) / np.abs(result_our),
+    )
+    print("time_our:", time_our)
+    print("time_nodiag:", time_nodiag)
 
 
 if __name__ == "__main__":
-    test1(100, 4, summor="numpy")
+    n = 1000
+    m = 8
+    print("torch")
+    test3(n, m, summor="torch")
+    # print("numpy")
+    # test3(n, m, summor="numpy")
