@@ -124,8 +124,8 @@ def test_loop(tensors, mode):
 @timer
 def test_nodiag(tensors, mode, summor="numpy"):
     tensors = tensors.copy()
-    caculator = UStatsCalculator(mode, summor=summor)
-    return caculator.calculate_non_diag(tensors)
+    calculator = UStatsCalculator(mode, summor=summor)
+    return calculator.calculate_non_diag(tensors)
 
 
 def test1(n, m, summor="numpy"):
