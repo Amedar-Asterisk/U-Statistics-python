@@ -1,5 +1,5 @@
-from typing import List, Tuple, Dict, Set, Union, Hashable
-from ..utils import standardize_indexes, numbers_to_letters
+from typing import List, Tuple, Union, Hashable
+from ..utils import standardize_indexes, NestedHashableList
 from dataclasses import dataclass
 
 
@@ -7,7 +7,7 @@ from dataclasses import dataclass
 class _Mode:
     _data: Tuple[Union[str, Tuple[Hashable, ...]], ...]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not isinstance(self._data, (list, tuple)):
             raise TypeError("A mode must be a list or tuple")
 
@@ -24,7 +24,8 @@ class _Mode:
             ):
                 continue
             raise TypeError(
-                "Each item in a mode must be either a string or a tuple of hashable objects"
+                "Each item in a mode must be either "
+                "a string or a tuple of hashable objects"
             )
 
         self._shape = tuple(len(item) for item in self._data)
@@ -52,6 +53,6 @@ class _Mode:
 
 
 class _StandardizedMode(_Mode):
-    def __init__(self, mode: List[Union[str, List[Hashable]]]):
+    def __init__(self, mode: NestedHashableList) -> None:
         standardized_data = standardize_indexes(mode)
         super().__init__(standardized_data)

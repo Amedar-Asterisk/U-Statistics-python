@@ -2,23 +2,21 @@ import numpy as np
 import warnings
 from .path import TensorExpression, NestedHashableList
 from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
+from ..utils import _initialize_torch
 
 try:
     import torch
 except ImportError:
-    warnings.warn(
-        "Torch is not installed. Tensor contraction will be performed using NumPy."
-    )
+    pass
 
 
 class TensorContractionCalculator:
-    """
-    A class for contracting multiple tensors according to specified computation rules.
-    """
+    """A class for contracting multiple tensors according to specified
+    computation rules."""
 
     def __init__(self, summor: str = "numpy"):
-        """
-        Initialize TensorContractor with specified tensor contraction backend.
+        """Initialize TensorContractor with specified tensor contraction
+        backend.
 
         Args:
             summor: str, either "numpy" or "torch"
@@ -34,6 +32,7 @@ class TensorContractionCalculator:
             import torch
 
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
             return torch.einsum
         else:
             raise ValueError(
@@ -52,7 +51,7 @@ class TensorContractionCalculator:
     ) -> Dict[int, np.ndarray]:
         """Initialize the tensor dictionary."""
         if self.summor_name == "torch":
-            import torch
+            import torch  # noqa: F401
 
             if isinstance(tensors, list):
                 tensors = {
@@ -73,7 +72,8 @@ class TensorContractionCalculator:
             elif isinstance(tensors, dict):
                 return {i: tensor for i, tensor in tensors.items() if shape[i] > 0}
             raise ValueError(
-                f"Invalid input: tensors must be a list or a dictionary but it is {type(tensors)}."
+                f"Invalid input: tensors must be a list "
+                f"or a dictionary but it is {type(tensors)}."
             )
 
     def _validate_inputs(
@@ -103,7 +103,10 @@ class TensorContractionCalculator:
                 tensor_dict.pop(i)
             tensor_dict[position_number] = result
             position_number += 1
-        return np.prod(list(tensor_dict.values()))
+        if self.summor_name == "numpy":
+            return np.prod(list(tensor_dict.values()))
+        elif self.summor_name == "torch":
+            return np.prod([value.to_numpy() for value in tensor_dict.values()])
 
     def calculate(
         self,
@@ -127,4 +130,12 @@ class TensorContractionCalculator:
         return self._tensor_contract(tensors, path)
 
     def _to_device(self, tensor: np.ndarray | torch.Tensor) -> torch.Tensor:
-        return torch.tensor(tensor, dtype=torch.float32).to(self.device)
+        """Convert a numpy array to a torch tensor on the specified device."""
+        if isinstance(tensor, np.ndarray):
+            return torch.tensor(tensor, device=self.device)
+        elif isinstance(tensor, torch.Tensor):
+            return tensor.to(self.device)
+        else:
+            raise TypeError(
+                f"Expected a numpy array or torch tensor, but got {type(tensor)}."
+            )

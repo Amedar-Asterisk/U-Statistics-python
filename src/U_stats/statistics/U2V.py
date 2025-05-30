@@ -1,12 +1,3 @@
-##################################################
-# Description:
-# The U2V class is used to convert a U-statistics graph to a V-statistics graph.
-# The encode_partition function is used to encode a partition using the minimum value of each subset.
-# The partition_weights function is used to calculate the weight of a partition.
-# The stirling_number function is used to calculate the Stirling number of the second kind.
-# The get_all_partitions function is used to generate all possible partitions of numbers [0, 1, ..., m-1] into k non-empty subsets.
-# The partitions function is used to generate all ways to partition numbers [0, 1, ..., m-1] into k non-empty subsets.
-
 from typing import (
     Callable,
     List,
@@ -18,12 +9,8 @@ from typing import (
     Union,
     overload,
     Dict,
-    Tuple,
-    Optional,
-    Any,
 )
-from ..utils import *
-from ..utils import AB_table
+from ..utils import AB_table, standardize_indexes
 from math import factorial
 import numpy as np
 
@@ -39,11 +26,13 @@ T = TypeVar("T", bound=Hashable)
 
 
 @overload
-def partitions(m: int, k: int) -> Generator[List[Set[int]], None, None]: ...
+def partitions(  # noqa: E704
+    m: int, k: int
+) -> Generator[List[Set[int]], None, None]: ...
 
 
 @overload
-def partitions(
+def partitions(  # noqa: E704
     elements: Union[Sequence[T], Set[T]], k: int
 ) -> Generator[List[Set[T]], None, None]: ...
 

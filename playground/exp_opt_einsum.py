@@ -36,8 +36,8 @@ def test3():
 
 
 def tensers_shape_of_format(format: str, n: int = 100) -> list:
-    """
-    Convert a string format to a list of tensor shapes.
+    """Convert a string format to a list of tensor shapes.
+
     :param format: A string format like "abc,def,ghi->"
     :return: A list of tensor shapes.
     """
@@ -46,8 +46,8 @@ def tensers_shape_of_format(format: str, n: int = 100) -> list:
 
 
 def virtual_tensors(shapes: list) -> list:
-    """
-    Convert a list of tensor shapes to a list of virtual tensors.
+    """Convert a list of tensor shapes to a list of virtual tensors.
+
     :param shapes: A list of tensor shapes.
     :return: A list of virtual tensors.
     """

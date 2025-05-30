@@ -1,0 +1,22 @@
+[flake8]
+ignore =
+    # continuation line over indented
+    E126,
+    # contested rule that conflicts with black
+    E203,
+    # whitespace around arithmetic operator
+    E226,
+    # line break before binary operator
+    W503,
+max-line-length = 88
+per-file-ignores =
+    __init__.py: F401,F403,F405,
+    tests/*: F401,F403,F405
+statistics = True
+exclude =
+    migrations/
+    venv/
+    playground/
+    .git/
+    __pycache__/
+    *.egg-info/

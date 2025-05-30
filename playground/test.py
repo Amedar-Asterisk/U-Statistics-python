@@ -3,9 +3,7 @@ import numpy as np
 
 
 def full_bipart(set1, set2):
-    """
-    Generate a full bipartite graph between two sets of indices.
-    """
+    """Generate a full bipartite graph between two sets of indices."""
     result = ""
     for i in set1:
         for j in set2:
