@@ -345,11 +345,11 @@ class TensorExpression:
             min_cost = np.min(cost_vector)
             min_cost_positions = np.where(cost_vector == min_cost)[0]
 
-            # find the index with the minimum fill-in from indices with the minmum cost
+            # find the index with the minimum fill-in from indices with the minimum cost
             if len(min_cost_positions) > 1:
                 max_edges = 0
                 for position in min_cost_positions:
-                    vector = adj_matrix[index]
+                    vector = adj_matrix[position]
                     mask = np.outer(vector, vector)
                     edges = np.sum(adj_matrix[mask])
                     if edges > max_edges:
