@@ -10,7 +10,9 @@ from typing import (
     overload,
     Dict,
 )
-from ..utils import AB_table, standardize_indexes
+from ..utils._typing import Expression
+from ..utils.convert import standardize_indices
+from ..utils.alphabet import ALPHABET
 from math import factorial
 import numpy as np
 
@@ -112,17 +114,20 @@ def get_all_partitions_nonconnected(
     yield from backtrack(vertices, [])
 
 
-def encoding_func(mode: List[List[int]]) -> Callable[[List[Set[int]]], List[str]]:
-    standardized_mode = standardize_indexes(mode)
+def encoding_func(expression: List[List[int]]) -> Callable[[List[Set[int]]], List[str]]:
+    standardized_expression = standardize_indices(expression)
 
     def encoded_partition(partition: List[Set[int]]):
         current_index = 0
         mapping = {}
         for s in partition:
             for i in s:
-                mapping[i] = AB_table[current_index]
+                mapping[i] = ALPHABET[current_index]
             current_index += 1
-        return ["".join([mapping[index] for index in lst]) for lst in standardized_mode]
+        return [
+            "".join([mapping[index] for index in lst])
+            for lst in standardized_expression
+        ]
 
     return encoded_partition
 

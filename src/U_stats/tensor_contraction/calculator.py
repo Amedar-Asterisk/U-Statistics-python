@@ -1,6 +1,7 @@
 import numpy as np
-from .path import TensorExpression, NestedHashableList
+from .path import TensorExpression
 from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
+from ..utils._typing import Expression
 
 try:
     import torch
@@ -37,10 +38,10 @@ class TensorContractionCalculator:
                 f"Invalid summor: {summor}. It should be either 'numpy' or 'torch'."
             )
 
-    def _initalize_mode(
-        self, mode: Union[List[List[Hashable]], List[str]]
+    def _initalize_expression(
+        self, expression: Union[List[List[Hashable]], List[str]]
     ) -> TensorExpression:
-        return TensorExpression(mode)
+        return TensorExpression(expression)
 
     def _initalize_tensor_dict(
         self,
@@ -79,9 +80,11 @@ class TensorContractionCalculator:
         tensors: Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> None:
-        """Validate the input tensors and mode."""
+        """Validate the input tensors and expression."""
         if len(tensors.keys()) != len(shape):
-            raise ValueError("The number of tensors does not match the mode shape.")
+            raise ValueError(
+                "The number of tensors does not match the expression shape."
+            )
         for i, tensor in tensors.items():
             if len(tensor.shape) != shape[i]:
                 raise ValueError(f"Tensor {i} has an invalid shape.")
@@ -109,20 +112,20 @@ class TensorContractionCalculator:
     def calculate(
         self,
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
-        mode: NestedHashableList | TensorExpression,
+        expression: Expression | TensorExpression,
         path_method: str = "greedy",
         print_cost: bool = False,
         _validate: bool = True,
-        _init_mode=True,
+        _init_expression=True,
         _init_tensor=True,
     ) -> float:
-        if _init_mode:
-            mode = self._initalize_mode(mode)
+        if _init_expression:
+            expression = self._initalize_expression(expression)
         if _init_tensor:
-            tensors = self._initalize_tensor_dict(tensors, mode.shape)
+            tensors = self._initalize_tensor_dict(tensors, expression.shape)
         if _validate:
-            self._validate_inputs(tensors, mode.shape)
-        path, cost = mode.path(path_method)
+            self._validate_inputs(tensors, expression.shape)
+        path, cost = expression.path(path_method)
         if print_cost:
             print(f"The max rank of complexity is {cost}.")
         return self._tensor_contract(tensors, path)
