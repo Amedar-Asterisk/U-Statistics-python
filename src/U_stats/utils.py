@@ -368,5 +368,6 @@ def _initialize_torch():
         return torch, device
     except ImportError:
         raise ImportError(
-            "Torch is not installed. Please install it to use tensor contraction with torch."
+            "Torch is not installed. Please install it "
+            "to use tensor contraction with torch."
         )
