@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union, Hashable
+from typing import Tuple, Union, Hashable
 from ..utils import standardize_indexes, NestedHashableList
 from dataclasses import dataclass
 

@@ -1,8 +1,6 @@
 import numpy as np
-import warnings
 from .path import TensorExpression, NestedHashableList
 from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
-from ..utils import _initialize_torch
 
 try:
     import torch
