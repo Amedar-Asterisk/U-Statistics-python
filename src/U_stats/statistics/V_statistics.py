@@ -1,13 +1,16 @@
 from ..tensor_contraction.calculator import TensorContractionCalculator
-from ..tensor_contraction.path import TensorExpression, NestedHashableList
+from ..tensor_contraction.path import TensorExpression
+from .._utils import Expression
 from typing import List
 import numpy as np
+
+__all__ = ["VStatsCalculator"]
 
 
 class VExpression(TensorExpression):
 
-    def __init__(self, mode: NestedHashableList):
-        super().__init__(mode)
+    def __init__(self, expression: Expression):
+        super().__init__(expression)
         self._path = {}
         self._cost = {}
 
@@ -24,20 +27,12 @@ class VExpression(TensorExpression):
 
 
 class VStatsCalculator(TensorContractionCalculator):
-    """A class for calculating the statistics of a list of kernel
-    matrices(tensors) with particular mode."""
 
-    def __init__(self, mode: NestedHashableList, summor: str = "numpy"):
-        """Initialize VStatsCalculator with specified tensor contraction
-        backend.
-
-        Args:
-            summor: str, either "numpy" or "torch"
-        """
+    def __init__(self, expression: Expression, summor: str = "numpy"):
         super().__init__(summor)
-        self.mode = VExpression(mode)
-        self.shape = self.mode.shape
-        self.order = self.mode.order
+        self.expression = VExpression(expression)
+        self.shape = self.expression.shape
+        self.order = self.expression.order
 
     def calculate(
         self,
@@ -50,23 +45,8 @@ class VStatsCalculator(TensorContractionCalculator):
             self, tensors, self.shape
         )
         TensorContractionCalculator._validate_inputs(self, tensors, self.shape)
-        path, _ = self.mode.path(path_method)
+        path = self.expression.path(path_method)
         result = TensorContractionCalculator._tensor_contract(self, tensors, path)
         if average:
             return result / (n_samples**self.order)
         return result
-
-
-def V_stats(
-    tensors: List[np.ndarray], mode: NestedHashableList, average=True, summor="numpy"
-) -> float:
-    """Calculate the V statistics of a list of kernel matrices(tensors) with
-    particular mode.
-
-    Args:
-        tensors: List[np.ndarray], a list of kernel matrices
-
-    Returns:
-        float, the V statistics of the kernel matrices
-    """
-    return VStatsCalculator(mode, summor=summor).calculate(tensors, average)

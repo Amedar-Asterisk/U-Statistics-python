@@ -1,6 +1,7 @@
 numpy
 torch
 opt_einsum
+cotengra
 
 [deployment]
 flake8

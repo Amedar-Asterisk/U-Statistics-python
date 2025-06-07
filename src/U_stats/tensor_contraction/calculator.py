@@ -1,35 +1,20 @@
 import numpy as np
-from .path import TensorExpression, NestedHashableList
+from .path import TensorExpression
 from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
-
-try:
-    import torch
-except ImportError:
-    pass
+from .._utils import Expression, _to_device
 
 
 class TensorContractionCalculator:
-    """A class for contracting multiple tensors according to specified
-    computation rules."""
 
     def __init__(self, summor: str = "numpy"):
-        """Initialize TensorContractor with specified tensor contraction
-        backend.
-
-        Args:
-            summor: str, either "numpy" or "torch"
-        """
         self.summor = self._initialize_summor(summor)
         self.summor_name = summor
 
     def _initialize_summor(self, summor: str) -> Callable:
-        """Set up the tensor contraction function."""
         if summor == "numpy":
             return np.einsum
         elif summor == "torch":
             import torch
-
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
             return torch.einsum
         else:
@@ -37,29 +22,28 @@ class TensorContractionCalculator:
                 f"Invalid summor: {summor}. It should be either 'numpy' or 'torch'."
             )
 
-    def _initalize_mode(
-        self, mode: Union[List[List[Hashable]], List[str]]
+    def _initalize_expression(
+        self, expression: Union[List[List[Hashable]], List[str]]
     ) -> TensorExpression:
-        return TensorExpression(mode)
+        return TensorExpression(expression)
 
     def _initalize_tensor_dict(
         self,
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> Dict[int, np.ndarray]:
-        """Initialize the tensor dictionary."""
         if self.summor_name == "torch":
             import torch  # noqa: F401
 
             if isinstance(tensors, list):
                 tensors = {
-                    i: self._to_device(tensor)
+                    i: _to_device(tensor)
                     for i, tensor in enumerate(tensors)
                     if shape[i] > 0
                 }
             elif isinstance(tensors, dict):
                 tensors = {
-                    i: self._to_device(tensor)
+                    i: _to_device(tensor)
                     for i, tensor in tensors.items()
                     if shape[i] > 0
                 }
@@ -79,9 +63,10 @@ class TensorContractionCalculator:
         tensors: Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> None:
-        """Validate the input tensors and mode."""
         if len(tensors.keys()) != len(shape):
-            raise ValueError("The number of tensors does not match the mode shape.")
+            raise ValueError(
+                "The number of tensors does not match the expression shape."
+            )
         for i, tensor in tensors.items():
             if len(tensor.shape) != shape[i]:
                 raise ValueError(f"Tensor {i} has an invalid shape.")
@@ -109,31 +94,20 @@ class TensorContractionCalculator:
     def calculate(
         self,
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
-        mode: NestedHashableList | TensorExpression,
+        expression: Expression | TensorExpression,
         path_method: str = "greedy",
         print_cost: bool = False,
         _validate: bool = True,
-        _init_mode=True,
+        _init_expression=True,
         _init_tensor=True,
     ) -> float:
-        if _init_mode:
-            mode = self._initalize_mode(mode)
+        if _init_expression:
+            expression = self._initalize_expression(expression)
         if _init_tensor:
-            tensors = self._initalize_tensor_dict(tensors, mode.shape)
+            tensors = self._initalize_tensor_dict(tensors, expression.shape)
         if _validate:
-            self._validate_inputs(tensors, mode.shape)
-        path, cost = mode.path(path_method)
+            self._validate_inputs(tensors, expression.shape)
+        path, cost = expression.path(path_method)
         if print_cost:
             print(f"The max rank of complexity is {cost}.")
         return self._tensor_contract(tensors, path)
-
-    def _to_device(self, tensor: np.ndarray | torch.Tensor) -> torch.Tensor:
-        """Convert a numpy array to a torch tensor on the specified device."""
-        if isinstance(tensor, np.ndarray):
-            return torch.tensor(tensor, device=self.device)
-        elif isinstance(tensor, torch.Tensor):
-            return tensor.to(self.device)
-        else:
-            raise TypeError(
-                f"Expected a numpy array or torch tensor, but got {type(tensor)}."
-            )
