@@ -1,5 +1,5 @@
 __title__ = "u_stats"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __description__ = "A Python package for efficient computation of U-statistics and V-statistics via tensor contraction."
 __author__ = "Zhang Ruiqi"
 __author_email__ = "zrq1706@outlook.com"
