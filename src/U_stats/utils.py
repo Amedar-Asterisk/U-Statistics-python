@@ -1,5 +1,16 @@
 from collections import defaultdict
-from typing import List, Tuple, Union, Callable, Optional, Any, Dict, Set, Hashable
+from typing import (
+    List,
+    Tuple,
+    TypeVar,
+    Union,
+    Callable,
+    Optional,
+    Any,
+    Dict,
+    Set,
+    Hashable,
+)
 import string
 import re
 import numpy as np
@@ -317,27 +328,29 @@ def get_adj_list(mode: NestedHashableList) -> Dict[int, Set[int]]:
     return adj_list
 
 
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
 class Timer(ContextDecorator):
     def __init__(
         self, name: Optional[str] = None, logger: Optional[Callable] = print
     ) -> None:
         self.name = name or "Task"
         self.logger = logger
-        self.start_time = None
-        self.end_time = None
-        self.elapsed = None
+        self.start_time: Optional[float] = None
+        self.end_time: Optional[float] = None
+        self.elapsed: Optional[float] = None
 
     def __enter__(self) -> "Timer":
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self) -> False:
+    def __exit__(self, exc_type=None, exc_val=None, exc_tb=None) -> None:
         self.end_time = time.perf_counter()
         self.elapsed = self.end_time - self.start_time
         self.logger(f"{self.name} using: {self.elapsed:.3f} seconds")
-        return False
 
-    def __call__(self, func: Callable) -> Callable:
+    def __call__(self, func: _F) -> _F:
         if self.name is None:
             self.name = func.__name__
 
@@ -346,7 +359,7 @@ class Timer(ContextDecorator):
             with self:
                 return func(*args, **kwargs)
 
-        return wrapped
+        return wrapped  # type: ignore
 
 
 def _initialize_torch():
