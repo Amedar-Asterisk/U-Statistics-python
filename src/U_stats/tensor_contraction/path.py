@@ -1,7 +1,7 @@
 from .mode import _StandardizedMode
-import warnings
+import warnings  # noqa: F401
 from functools import cached_property
-from typing import List, Tuple, Dict, Set, Union, Hashable, Optional
+from typing import List, Tuple, Dict, Set, Optional, Callable
 import itertools
 import numpy as np
 import opt_einsum as oe
@@ -19,15 +19,12 @@ from ..utils import (
 class _IndexRegistry:
     __slots__ = ["_location_map"]
 
-    def __init__(self):
-        """
-        Initialize an empty index registry.
-        """
+    def __init__(self) -> None:
+        """Initialize an empty index registry."""
         self._location_map: Dict[int, Set[int]] = {}
 
-    def copy(self):
-        """
-        Create a deep copy of the index registry.
+    def copy(self) -> "_IndexRegistry":
+        """Create a deep copy of the index registry.
 
         Returns:
             IndexRegistry: A new registry object with the same index mappings
@@ -38,8 +35,7 @@ class _IndexRegistry:
 
     @property
     def indices(self) -> Set[int]:
-        """
-        Get all registered unique indices.
+        """Get all registered unique indices.
 
         Returns:
             Set[str]: A set of all unique indices currently in the registry
@@ -49,8 +45,7 @@ class _IndexRegistry:
         return set(self._location_map.keys())
 
     def append(self, index: int, location: int) -> None:
-        """
-        Add a new index-position mapping.
+        """Add a new index-position mapping.
 
         Args:
             index (int): The index to add
@@ -66,8 +61,7 @@ class _IndexRegistry:
         self._location_map[index].add(location)
 
     def remove(self, index: int, location: int) -> None:
-        """
-        Remove an index-position mapping.
+        """Remove an index-position mapping.
 
         Args:
             index (int): The index to remove
@@ -94,8 +88,7 @@ class _IndexRegistry:
                 self._location_map[objective].update(positions)
 
     def locations(self, index: int) -> List[int]:
-        """
-        Get all positions where an index appears.
+        """Get all positions where an index appears.
 
         Args:
             index (str): The index to query
@@ -103,7 +96,6 @@ class _IndexRegistry:
         Returns:
             Set[int]: Set of positions where the index appears.
                      Returns empty set if index doesn't exist.
-
         """
         return sorted(list(self._location_map.get(index, set())))
 
@@ -112,7 +104,7 @@ class TensorExpression:
 
     __size: int = 10**4
 
-    def __init__(self, mode: NestedHashableList):
+    def __init__(self, mode: Optional[NestedHashableList] = None) -> None:
         if mode is not None:
             mode: _StandardizedMode = _StandardizedMode(mode)
             self._position_number = len(mode)
@@ -122,18 +114,18 @@ class TensorExpression:
                 if len(pair) > 0:
                     pair_dict[i] = pair
             self._pair_dict = pair_dict
-            self._index_table = _IndexRegistry()
+            self._index_table: "_IndexRegistry" = _IndexRegistry()
             for i, pair in self._pair_dict.items():
                 for index in pair:
                     self._index_table.append(index, i)
 
         else:
             self._pair_dict = {}
-            self._index_table = _IndexRegistry()
+            self._index_table: "_IndexRegistry" = _IndexRegistry()
             self._position_number = 0
             self.shape = None
 
-    def copy(self):
+    def copy(self) -> "TensorExpression":
         new_state = TensorExpression(None)
         new_state._pair_dict = deepcopy(self._pair_dict)
         new_state._index_table = self._index_table.copy()
@@ -141,13 +133,12 @@ class TensorExpression:
         new_state._position_number = self._position_number
         return new_state
 
-    def __str__(self):
+    def __str__(self) -> str:
         keys = sorted(self._pair_dict.keys())
         return f"({",".join([str(self._pair_dict[key]) for key in keys])})->"
 
     def __getitem__(self, index: int) -> List[int]:
-        """
-        Get the pair of indices for a given index.
+        """Get the pair of indices for a given index.
 
         Args:
             index (int): The index to query
@@ -156,7 +147,7 @@ class TensorExpression:
             List[int]: The pair of indices associated with the given index.
                        Returns empty list if index doesn't exist.
         """
-        return self._pair_dict.get(index, [])
+        return self._pair_dict[index]
 
     @cached_property
     def indices(self) -> List[int]:
@@ -395,7 +386,8 @@ class TensorExpression:
     def path(self, method: str = "greedy") -> Tuple[List[Tuple[List[int], str]], int]:
         if method not in self._METHOD_:
             raise ValueError(
-                f"Invalid method: {method}. Available methods are: {list(self._METHOD_.keys())}"
+                f"Invalid method: {method}. "
+                "Available methods are: {list(self._METHOD_.keys())}"
             )
         index_path, cost = self._METHOD_[method](self)
         computing_path = self.computing_representation_path(index_path)
@@ -413,7 +405,7 @@ class TensorExpression:
         )
 
     @staticmethod
-    def _construct_index_mapping(indices: List[int]) -> callable:
+    def _construct_index_mapping(indices: List[int]) -> Callable:
         index_dict = {index: i for i, index in enumerate(indices)}
 
         def mapping(index: int) -> int:

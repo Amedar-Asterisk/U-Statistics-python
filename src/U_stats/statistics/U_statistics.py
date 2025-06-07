@@ -1,6 +1,6 @@
 from ..tensor_contraction.path import TensorExpression, NestedHashableList
 from ..tensor_contraction.calculator import TensorContractionCalculator
-from typing import List, Union, Hashable, Generator, Tuple, Dict, Set
+from typing import List, Hashable, Generator, Tuple, Dict, Set
 from functools import cached_property
 import warnings
 from .U2V import get_all_partitions, partition_weight, get_all_partitions_nonconnected
@@ -69,13 +69,12 @@ class UExpression(TensorExpression):
 
 
 class UStatsCalculator(TensorContractionCalculator):
-    """
-    A class for calculating the U statistics of a list of kernel matrices(tensors) with particular mode.
-    """
+    """A class for calculating the U statistics of a list of kernel
+    matrices(tensors) with particular mode."""
 
     def __init__(self, mode: NestedHashableList, summor: str = "numpy"):
-        """
-        Initialize UStatsCalculator with specified tensor contraction backend.
+        """Initialize UStatsCalculator with specified tensor contraction
+        backend.
 
         Args:
             summor: str, either "numpy" or "torch"
@@ -88,8 +87,8 @@ class UStatsCalculator(TensorContractionCalculator):
     def calculate(
         self, tensors: List[np.ndarray], average=True, path_method="greedy"
     ) -> float:
-        """
-        Calculate the U statistics of a list of kernel matrices(tensors) with particular mode.
+        """Calculate the U statistics of a list of kernel matrices(tensors)
+        with particular mode.
 
         Args:
             tensors: List[np.ndarray], a list of kernel matrices
@@ -114,8 +113,8 @@ class UStatsCalculator(TensorContractionCalculator):
     def caculate_non_diag(
         self, tensors: List[np.ndarray], average=True, path_method="greedy"
     ) -> float:
-        """
-        Calculate the U statistics of a list of kernel matrices(tensors) with particular mode.
+        """Calculate the U statistics of a list of kernel matrices(tensors)
+        with particular mode.
 
         Args:
             tensors: List[np.ndarray], a list of kernel matrices
@@ -136,7 +135,7 @@ class UStatsCalculator(TensorContractionCalculator):
         for weight, submode in submodes:
             path, cost = submode.path(path_method)
             result += weight * TensorContractionCalculator._tensor_contract(
-                self, tensors.copy(), path
+                self, tensors.copy(), computing_path=path
             )
         if average:
             return result / np.prod(range(n_samples, n_samples - self.order, -1))
@@ -208,11 +207,11 @@ class UStatsCalculator(TensorContractionCalculator):
 def U_stats(
     tensors: List[np.ndarray],
     mode: NestedHashableList,
-    average=True,
+    average: bool = True,
     summor: str = "numpy",
 ) -> float:
-    """
-    Calculate the U statistics of a list of kernel matrices(tensors) with particular mode.
+    """Calculate the U statistics of a list of kernel matrices(tensors) with
+    particular mode.
 
     Args:
         tensors: List[np.ndarray], a list of kernel matrices

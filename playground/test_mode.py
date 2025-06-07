@@ -4,8 +4,7 @@ from typing import Tuple
 
 
 def einsum_expression_to_mode(expression: str) -> Tuple[str, str]:
-    """
-    Convert an Einstein summation expression to a mode string.
+    """Convert an Einstein summation expression to a mode string.
 
     Args:
         expression (str): The Einstein summation expression (e.g., 'ij,jk->ik').

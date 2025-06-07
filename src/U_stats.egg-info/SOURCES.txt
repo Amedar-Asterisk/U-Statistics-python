@@ -19,4 +19,3 @@ src/U_stats/tensor_contraction/__init__.py
 src/U_stats/tensor_contraction/calculator.py
 src/U_stats/tensor_contraction/mode.py
 src/U_stats/tensor_contraction/path.py
-src/U_stats/tensor_contraction/state.py

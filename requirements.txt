@@ -1,0 +1,10 @@
+numpy
+torch
+opt_einsum
+
+[deployment]
+flake8
+black
+docformatter
+tox
+mypy

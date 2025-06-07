@@ -1,6 +1,6 @@
-from ..tensor_contraction.calculator import TensorContractionCalculator, BACKEND
+from ..tensor_contraction.calculator import TensorContractionCalculator
 from ..tensor_contraction.path import TensorExpression, NestedHashableList
-from typing import List, Union, Hashable
+from typing import List
 import numpy as np
 
 
@@ -24,13 +24,12 @@ class VExpression(TensorExpression):
 
 
 class VStatsCalculator(TensorContractionCalculator):
-    """
-    A class for calculating the statistics of a list of kernel matrices(tensors) with particular mode.
-    """
+    """A class for calculating the statistics of a list of kernel
+    matrices(tensors) with particular mode."""
 
     def __init__(self, mode: NestedHashableList, summor: str = "numpy"):
-        """
-        Initialize VStatsCalculator with specified tensor contraction backend.
+        """Initialize VStatsCalculator with specified tensor contraction
+        backend.
 
         Args:
             summor: str, either "numpy" or "torch"
@@ -61,8 +60,8 @@ class VStatsCalculator(TensorContractionCalculator):
 def V_stats(
     tensors: List[np.ndarray], mode: NestedHashableList, average=True, summor="numpy"
 ) -> float:
-    """
-    Calculate the V statistics of a list of kernel matrices(tensors) with particular mode.
+    """Calculate the V statistics of a list of kernel matrices(tensors) with
+    particular mode.
 
     Args:
         tensors: List[np.ndarray], a list of kernel matrices

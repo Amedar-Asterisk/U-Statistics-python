@@ -4,3 +4,4 @@
 paper/*
 data/*
 *.pyc
+.tox/*
