@@ -1,8 +1,10 @@
 from ..tensor_contraction.calculator import TensorContractionCalculator
 from ..tensor_contraction.path import TensorExpression
-from ..utils._typing import Expression
+from .._utils import Expression
 from typing import List
 import numpy as np
+
+__all__ = ["VStatsCalculator"]
 
 
 class VExpression(TensorExpression):
@@ -48,9 +50,3 @@ class VStatsCalculator(TensorContractionCalculator):
         if average:
             return result / (n_samples**self.order)
         return result
-
-
-def V_stats(
-    tensors: List[np.ndarray], expression: Expression, average=True, summor="numpy"
-) -> float:
-    return VStatsCalculator(expression, summor=summor).calculate(tensors, average)

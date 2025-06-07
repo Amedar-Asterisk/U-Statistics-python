@@ -1,7 +1,7 @@
-from typing import List
+from .._utils import Expression
 
 
-def Euler(m: int, r: int = 2) -> List[List[int]]:
+def Euler(m: int, r: int = 2) -> Expression:
     if m < r or r < 1:
         raise ValueError(
             "Invalid input: m must be greater than or equal to r, and r "
@@ -10,9 +10,9 @@ def Euler(m: int, r: int = 2) -> List[List[int]]:
     return [[i + k for k in range(r)] for i in range(m - r + 1)]
 
 
-def single(m: int) -> List[List[int]]:
+def single(m: int) -> Expression:
     return [[i] for i in range(m)]
 
 
-def trival(m: int) -> List[List[int]]:
+def trival(m: int) -> Expression:
     return [list(range(m))]

@@ -5,10 +5,14 @@ import numpy as np
 import opt_einsum as oe
 from copy import deepcopy
 from dataclasses import dataclass
-from ..utils._typing import Expression
-from ..utils.convert import (
-    numbers_to_letters,
+from .._utils import (
+    Expression,
+    Path,
+    IndexPath,
+    TupledPath,
+    PathInfo,
     standardize_indices,
+    numbers_to_letters,
     einsum_equation_to_expression,
     expression_to_einsum_equation,
 )
@@ -69,6 +73,7 @@ class TensorExpression:
         if expression is not None:
             expression = standardize_indices(expression=expression)
             expression = [item for item in expression if len(item) > 0]
+            self.eq = expression_to_einsum_equation(numbers_to_letters(expression)[0])
             self.shape = tuple(len(pair) for pair in expression)
             pair_dict = dict.fromkeys(range(len(expression)), None)
             for i, pair in enumerate(expression):
@@ -95,8 +100,7 @@ class TensorExpression:
         return new_state
 
     def __str__(self) -> str:
-        keys = sorted(self._pair_dict.keys())
-        return f"({",".join([str(self._pair_dict[key]) for key in keys])})->"
+        return self.eq
 
     def __getitem__(self, index: int) -> List[int]:
         return self._pair_dict[index]
@@ -308,7 +312,7 @@ class TensorExpression:
 
         return path, cost
 
-    def computing_path(self, path: List[int]) -> List[Tuple[List[int], str]]:
+    def computing_path(self, path: List[int]) -> Path:
         computing_path = []
         registry = self._index_table.copy()
         pair_dict = self._pair_dict.copy()
@@ -333,7 +337,7 @@ class TensorExpression:
                 pair_dict.pop(position)
         return computing_path
 
-    def path(self, method: str = "greedy") -> Tuple[List[Tuple[List[int], str]], int]:
+    def path(self, method: str = "2-greedy") -> Tuple[Path, int]:
         if method not in self._METHOD_:
             raise ValueError(
                 f"Invalid method: {method}. "
@@ -344,15 +348,31 @@ class TensorExpression:
 
         return computing_path, cost
 
-    def tupled_path(
-        self, method: str = "greedy", analyze: bool = False, optimize: bool = False
-    ) -> str:
-        path, _ = self.path(method)
-        return self.tuplelize_path(
-            path,
-            optimize=optimize,
-            analyze=analyze,
-        )
+    def analyze_path(
+        self,
+        path: Path,
+        size: int = __size,
+        optimize: Optional[str] = False,
+    ) -> PathInfo:
+        path_info = PathInfo()
+        path_info.input_subscripts = self.eq
+        path_info.output_subscript = ""
+        path_info.indices = numbers_to_letters(self.indices)[0]
+        print(f"Indices: {path_info.indices}")
+        path_info.size_dict = {index: size for index in path_info.indices}
+        path_info.shapes = [(size,) * len(pair) for pair in self._pair_dict.values()]
+        for positions, computing_format in path:
+            lhsexpressions, _ = einsum_equation_to_expression(computing_format)
+            shapes = [(size,) * len(lhsexpression) for lhsexpression in lhsexpressions]
+            subpath, subpath_info = oe.contract_path(
+                computing_format,
+                *shapes,
+                optimize=optimize,
+                shapes=True,
+            )
+            path_info.contraction_list.append((positions, computing_format, subpath))
+            path_info.update(subpath_info)
+        return path_info
 
     @staticmethod
     def _construct_index_mapping(indices: List[int]) -> Callable:
@@ -426,38 +446,6 @@ class TensorExpression:
                 mapping[i] for i in pairs[-1]
             ]
 
-    @staticmethod
-    def tuplelize_path(
-        computing_path: List[Tuple[List[int], str]],
-        optimize: Optional[str] = False,
-        analyze: Optional[str] = False,
-    ) -> str:
-        path = []
-        if analyze:
-            flop_count = 0
-            intermediate_size = 0
-        for positions, computing_format in computing_path:
-            lhsexpressions, _ = einsum_equation_to_expression(computing_format)
-            shapes = [
-                (TensorExpression.__size,) * len(lhsexpression)
-                for lhsexpression in lhsexpressions
-            ]
-            subpath, subpath_info = oe.contract_path(
-                computing_format,
-                *shapes,
-                optimize=optimize,
-                shapes=True,
-            )
-            path.append((positions, subpath))
-            if analyze:
-                flop_count += subpath_info.opt_cost
-                intermediate_size = max(
-                    intermediate_size, subpath_info.largest_intermediate
-                )
-        if analyze:
-            return path, (flop_count, intermediate_size)
-        return path
-
     def _construct_adj_matrix(self):
         num = len(self.indices)
         adj_matrix = np.zeros((num, num), dtype=bool)
@@ -469,5 +457,6 @@ class TensorExpression:
     _METHOD_ = {
         "exhaustive": exhaustive_search,
         "greedy": greedy_search,
+        "2-greedy": double_greedy_search,
         "bb": branch_and_bound_search,
     }

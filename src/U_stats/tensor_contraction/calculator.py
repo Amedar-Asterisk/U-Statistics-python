@@ -1,12 +1,7 @@
 import numpy as np
 from .path import TensorExpression
 from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
-from ..utils._typing import Expression
-
-try:
-    import torch
-except ImportError:
-    pass
+from .._utils import Expression, _to_device
 
 
 class TensorContractionCalculator:
@@ -20,8 +15,6 @@ class TensorContractionCalculator:
             return np.einsum
         elif summor == "torch":
             import torch
-
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
             return torch.einsum
         else:
@@ -44,13 +37,13 @@ class TensorContractionCalculator:
 
             if isinstance(tensors, list):
                 tensors = {
-                    i: self._to_device(tensor)
+                    i: _to_device(tensor)
                     for i, tensor in enumerate(tensors)
                     if shape[i] > 0
                 }
             elif isinstance(tensors, dict):
                 tensors = {
-                    i: self._to_device(tensor)
+                    i: _to_device(tensor)
                     for i, tensor in tensors.items()
                     if shape[i] > 0
                 }
@@ -118,13 +111,3 @@ class TensorContractionCalculator:
         if print_cost:
             print(f"The max rank of complexity is {cost}.")
         return self._tensor_contract(tensors, path)
-
-    def _to_device(self, tensor: np.ndarray | torch.Tensor) -> torch.Tensor:
-        if isinstance(tensor, np.ndarray):
-            return torch.tensor(tensor, device=self.device)
-        elif isinstance(tensor, torch.Tensor):
-            return tensor.to(self.device)
-        else:
-            raise TypeError(
-                f"Expected a numpy array or torch tensor, but got {type(tensor)}."
-            )

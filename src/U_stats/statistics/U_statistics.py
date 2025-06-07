@@ -2,20 +2,15 @@ from ..tensor_contraction.path import TensorExpression
 from ..tensor_contraction.calculator import TensorContractionCalculator
 from typing import List, Hashable, Generator, Tuple, Dict, Set
 from functools import cached_property
-import warnings
 from .U2V import get_all_partitions, partition_weight, get_all_partitions_nonconnected
-from ..utils.convert import standardize_indices
-from ..utils._typing import Expression
+from .._utils import Expression, standardize_indices
 import numpy as np
 import itertools
 
-try:
-    import torch
-except ImportError:
-    warnings.warn(
-        "Torch is not installed. Tensor contraction will be performed using NumPy."
-    )
-__all__ = ["UStatsCalculator", "U_stats"]
+__all__ = [
+    "UStatsCalculator",
+    "U_stats_loop",
+]
 
 
 class UExpression(TensorExpression):
@@ -171,61 +166,6 @@ class UStatsCalculator(TensorContractionCalculator):
         mask = idx1 == idx2
         mask = np.broadcast_to(mask, (dim,) * ndim)
         return mask
-
-    @staticmethod
-    def _torch_mask_tensors(
-        tensors: Dict[int, torch.Tensor], sample_size: int, device: torch.device
-    ) -> Dict[int, torch.Tensor]:
-        shapes = {index: tensor.dim() for index, tensor in tensors.items()}
-        for index, ndim in shapes.items():
-            if ndim > 1:
-                mask_total = torch.zeros(
-                    (sample_size,) * ndim, dtype=torch.bool, device=device
-                )
-                for i, j in itertools.combinations(range(ndim), 2):
-                    mask = UStatsCalculator._torch_mask_tensor(
-                        ndim, sample_size, i, j, device
-                    )
-                    mask_total |= mask
-                mask_total = ~mask_total
-                tensors[index] = tensors[index] * mask_total
-        return tensors
-
-    @staticmethod
-    def _torch_mask_tensor(
-        ndim: int, dim: int, index1: int, index2: int, device: torch.device
-    ) -> torch.Tensor:
-        shape1 = [1] * ndim
-        shape1[index1] = dim
-        shape2 = [1] * ndim
-        shape2[index2] = dim
-
-        idx1 = torch.arange(dim, device=device).reshape(shape1)
-        idx2 = torch.arange(dim, device=device).reshape(shape2)
-        mask = idx1 == idx2
-        mask = mask.broadcast_to((dim,) * ndim)
-        return mask
-
-
-def U_stats(
-    tensors: List[np.ndarray],
-    expression: Expression,
-    average: bool = True,
-    summor: str = "numpy",
-) -> float:
-    """Calculate the U statistics of a list of kernel matrices(tensors) with
-    particular expression.
-
-    Args:
-        tensors: List[np.ndarray], a list of kernel matrices
-        expression: List[Union[List[Hashable], str]], the expression of the U statistics
-        average: bool, whether to average the U statistics
-        summor: str, either "numpy" or "torch"
-
-    Returns:
-        float, the U statistics of the kernel matrices
-    """
-    return UStatsCalculator(expression, summor=summor).calculate(tensors, average)
 
 
 def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> float:

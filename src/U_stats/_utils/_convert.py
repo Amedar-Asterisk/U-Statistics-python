@@ -1,6 +1,6 @@
 from typing import Optional, Tuple, List
 from ._typing import _StrExpression, _IntExpression, Expression
-from .alphabet import ALPHABET
+from ._alphabet import ALPHABET
 
 
 def numbers_to_letters(numbers: _IntExpression) -> Tuple[List[str], dict]:
@@ -103,6 +103,7 @@ def expression_to_einsum_equation(
     """
     if output is None:
         output = ""
+    inputs = [input if isinstance(input, str) else "".join(input) for input in inputs]
     return "->".join([",".join(inputs), output])
 
 
