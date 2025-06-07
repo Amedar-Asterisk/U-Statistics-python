@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from .._utils import (
     Expression,
     Path,
-    IndexPath,
-    TupledPath,
     PathInfo,
     standardize_indices,
     numbers_to_letters,

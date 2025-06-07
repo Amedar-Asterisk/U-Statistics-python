@@ -1,4 +1,5 @@
 from typing import Sequence, Union, Hashable, List, Tuple, Dict
+from opt_einsum.contract import ContractionListType, ArrayIndexType, PathType
 
 __all__ = [
     "Expression",
@@ -21,9 +22,6 @@ Expression = Union[_IntExpression, _StrExpression, _HashableExpression]
 Path = List[Tuple[List[int], str]]
 IndexPath = List[int]
 TupledPath = List[Tuple[List[int], str, List[Tuple[int]]]]
-
-
-from opt_einsum.contract import ContractionListType, ArrayIndexType, PathType, PathInfo
 
 
 class PathInfo:
