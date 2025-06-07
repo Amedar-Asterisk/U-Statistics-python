@@ -106,7 +106,7 @@ class TensorContractionCalculator:
         if self.summor_name == "numpy":
             return np.prod(list(tensor_dict.values()))
         elif self.summor_name == "torch":
-            return np.prod([value.to_numpy() for value in tensor_dict.values()])
+            return np.prod([value.cpu().numpy() for value in tensor_dict.values()])
 
     def calculate(
         self,
