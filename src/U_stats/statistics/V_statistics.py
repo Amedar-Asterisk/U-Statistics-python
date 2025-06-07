@@ -25,16 +25,8 @@ class VExpression(TensorExpression):
 
 
 class VStatsCalculator(TensorContractionCalculator):
-    """A class for calculating the statistics of a list of kernel
-    matrices(tensors) with particular expression."""
 
     def __init__(self, expression: Expression, summor: str = "numpy"):
-        """Initialize VStatsCalculator with specified tensor contraction
-        backend.
-
-        Args:
-            summor: str, either "numpy" or "torch"
-        """
         super().__init__(summor)
         self.expression = VExpression(expression)
         self.shape = self.expression.shape
@@ -51,7 +43,7 @@ class VStatsCalculator(TensorContractionCalculator):
             self, tensors, self.shape
         )
         TensorContractionCalculator._validate_inputs(self, tensors, self.shape)
-        path, _ = self.expression.path(path_method)
+        path = self.expression.path(path_method)
         result = TensorContractionCalculator._tensor_contract(self, tensors, path)
         if average:
             return result / (n_samples**self.order)
@@ -61,13 +53,4 @@ class VStatsCalculator(TensorContractionCalculator):
 def V_stats(
     tensors: List[np.ndarray], expression: Expression, average=True, summor="numpy"
 ) -> float:
-    """Calculate the V statistics of a list of kernel matrices(tensors) with
-    particular expression.
-
-    Args:
-        tensors: List[np.ndarray], a list of kernel matrices
-
-    Returns:
-        float, the V statistics of the kernel matrices
-    """
     return VStatsCalculator(expression, summor=summor).calculate(tensors, average)

@@ -10,21 +10,12 @@ except ImportError:
 
 
 class TensorContractionCalculator:
-    """A class for contracting multiple tensors according to specified
-    computation rules."""
 
     def __init__(self, summor: str = "numpy"):
-        """Initialize TensorContractor with specified tensor contraction
-        backend.
-
-        Args:
-            summor: str, either "numpy" or "torch"
-        """
         self.summor = self._initialize_summor(summor)
         self.summor_name = summor
 
     def _initialize_summor(self, summor: str) -> Callable:
-        """Set up the tensor contraction function."""
         if summor == "numpy":
             return np.einsum
         elif summor == "torch":
@@ -48,7 +39,6 @@ class TensorContractionCalculator:
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> Dict[int, np.ndarray]:
-        """Initialize the tensor dictionary."""
         if self.summor_name == "torch":
             import torch  # noqa: F401
 
@@ -80,7 +70,6 @@ class TensorContractionCalculator:
         tensors: Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> None:
-        """Validate the input tensors and expression."""
         if len(tensors.keys()) != len(shape):
             raise ValueError(
                 "The number of tensors does not match the expression shape."
@@ -131,7 +120,6 @@ class TensorContractionCalculator:
         return self._tensor_contract(tensors, path)
 
     def _to_device(self, tensor: np.ndarray | torch.Tensor) -> torch.Tensor:
-        """Convert a numpy array to a torch tensor on the specified device."""
         if isinstance(tensor, np.ndarray):
             return torch.tensor(tensor, device=self.device)
         elif isinstance(tensor, torch.Tensor):
