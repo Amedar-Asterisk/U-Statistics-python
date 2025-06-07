@@ -13,12 +13,10 @@ __all__ = [
     "TensorExpression",
     "UStatsCalculator",
     "VStatsCalculator",
+    "U_stats_loop",
 ]
 from .tensor_contraction.path import TensorExpression
-from .statistics import (
-    UStatsCalculator,
-    VStatsCalculator,
-)
+from .statistics import UStatsCalculator, VStatsCalculator, U_stats_loop
 from ._utils import Expression, PathInfo
 from typing import List, Tuple
 import numpy as np
