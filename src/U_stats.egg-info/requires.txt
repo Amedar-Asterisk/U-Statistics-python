@@ -1,4 +1,5 @@
 numpy
+opt_einsum
 
 [test]
 pytest>=7.0
