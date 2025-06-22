@@ -748,6 +748,6 @@ class TensorExpression:
         "greedy-fill-in": greedy_fill_in_search,
         "double-greedy-degree-then-fill": double_greedy_degree_then_fill_search,
         "double-greedy-fill-then-degree": double_greedy_fill_then_degree_search,
-        "double-greedy-fill-minus-degree": double_greedy_fill_minus_degree_a_search,
-        "double-greedy-fill-plus-degree": double_greedy_fill_plus_degree_a_search,
+        "double-greedy-fill-minus-degree": double_greedy_fill_minus_degree_search,
+        "double-greedy-fill-plus-degree": double_greedy_fill_plus_degree_search,
     }
