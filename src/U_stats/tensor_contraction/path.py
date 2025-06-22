@@ -265,6 +265,7 @@ class TensorExpression:
         path = []
         indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
+        np.fill_diagonal(matrix_copy, 0)
         index_mapping = self._construct_index_mapping(indices)
 
         while indices:
@@ -320,7 +321,7 @@ class TensorExpression:
         for index in indices:
             if len(self.positions(index)) == 1:
                 position = index_mapping(index)
-                cost = max(cost, self._degree(adj_matrix, position))
+                cost = max(cost, self._degree(adj_matrix, position, False))
                 adj_matrix = self._delete_index_(adj_matrix, position)
                 indices.remove(index)
                 path.append(index)
@@ -374,13 +375,14 @@ class TensorExpression:
             path = []
             indices = self.indices.copy()
             adj_matrix = self._adj_matrix.copy()
+            np.fill_diagonal(matrix_copy, 0)
             index_mapping = self._construct_index_mapping(indices)
-
+            
             # Preprocessing: eliminate indices appearing only once
             for index in indices.copy():
                 if len(self.positions(index)) == 1:
                     position = index_mapping(index)
-                    cost = max(cost, self._degree(adj_matrix, position))
+                    cost = max(cost, self._degree(adj_matrix, position, False))
                     adj_matrix = self._delete_index_(adj_matrix, position)
                     indices.remove(index)
                     path.append(index)
@@ -416,7 +418,7 @@ class TensorExpression:
             return path, cost
 
     
-    def double_greedy_fill_minus_degree_a_search(self) -> Tuple[List[int], int]:
+    def double_greedy_fill_minus_degree_search(self) -> Tuple[List[int], int]:
         """
         Heuristic elimination ordering using (fill-in - degree) cost and a dynamic degree bound (k).
 
@@ -435,13 +437,14 @@ class TensorExpression:
         path = []
         indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
+        np.fill_diagonal(matrix_copy, 0)
         index_mapping = self._construct_index_mapping(indices)
 
         # Preprocessing: eliminate indices with only one position
         for index in indices.copy():
             if len(self.positions(index)) == 1:
                 position = index_mapping(index)
-                cost = max(cost, self._degree(adj_matrix, position))
+                cost = max(cost, self._degree(adj_matrix, position, False))
                 adj_matrix = self._delete_index_(adj_matrix, position)
                 indices.remove(index)
                 path.append(index)
@@ -502,71 +505,7 @@ class TensorExpression:
 
         return path, cost
 
-    def double_greedy_fill_minus_degree_b_search(self) -> Tuple[List[int], int]:
-        """
-        Greedy elimination ordering based on minimizing (fill-in - degree).
-
-        Selection logic:
-            1. Compute cost = fill-in - degree for each node.
-            2. Prefer nodes with the lowest cost. If multiple nodes share the same cost,
-            break ties by choosing the one with the smallest degree.
-
-        Returns:
-            Tuple[List[int], int]: A tuple of (elimination_order, treewidth upper bound).
-        """
-
-        cost = 0
-        path = []
-        indices = self.indices.copy()
-        adj_matrix = self._adj_matrix.copy()
-        index_mapping = self._construct_index_mapping(indices)
-
-        # Preprocess: eliminate indices that appear in only one position
-        for index in indices.copy():
-            if len(self.positions(index)) == 1:
-                position = index_mapping(index)
-                cost = max(cost, self._degree(adj_matrix, position))
-                adj_matrix = self._delete_index_(adj_matrix, position)
-                indices.remove(index)
-                path.append(index)
-                index_mapping = self._construct_index_mapping(indices)
-
-        while indices:
-            candidates = []
-
-            for i, index in enumerate(indices):
-                degree = self._degree(adj_matrix, i)
-                neighbors = np.where(adj_matrix[i])[0]
-
-                # Count existing edges among neighbors
-                existing_edges = sum(
-                    adj_matrix[u, v] for u in neighbors for v in neighbors if u < v
-                )
-                potential_edges = degree * (degree - 1) // 2
-                cost_val = -degree + (potential_edges - existing_edges)
-                candidates.append((i, index, degree, cost_val))
-
-            # Case 1: prefer nodes with non-positive fill-in cost and minimal degree
-            neg_cost = [(i, index, deg, c) for i, index, deg, c in candidates if c <= 0]
-
-            # Case 2: fallback — pick node with minimal degree, then lowest cost
-            pos_cost = [(i, index, deg, c) for i, index, deg, c in candidates if c > 0]
-
-            if neg_cost:
-                chosen = min(neg_cost, key=lambda x: (x[2], x[3]))
-            else:
-                chosen = min(pos_cost, key=lambda x: (x[2], x[3]))
-
-            i, index, degree, _ = chosen
-            cost = max(cost, degree)
-            path.append(index)
-            adj_matrix = self._eliminate_index_(adj_matrix, i)
-            indices.pop(i)
-            index_mapping = self._construct_index_mapping(indices)
-
-        return path, cost
-
-    def double_greedy_fill_plus_degree_a_search(self) -> Tuple[List[int], int]:
+    def double_greedy_fill_plus_degree_search(self) -> Tuple[List[int], int]:
         """
         Heuristic elimination ordering based on score = degree + fill-in with dynamic threshold (k).
 
@@ -583,13 +522,14 @@ class TensorExpression:
         path = []
         indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
+        np.fill_diagonal(matrix_copy, 0)
         index_mapping = self._construct_index_mapping(indices)
 
         # Preprocessing: eliminate indices appearing in only one position
         for index in indices.copy():
             if len(self.positions(index)) == 1:
                 position = index_mapping(index)
-                cost = max(cost, self._degree(adj_matrix, position))
+                cost = max(cost, self._degree(adj_matrix, position, False))
                 adj_matrix = self._delete_index_(adj_matrix, position)
                 indices.remove(index)
                 path.append(index)
@@ -639,64 +579,6 @@ class TensorExpression:
             index_mapping = self._construct_index_mapping(indices)
 
         return path, cost
-
-    def double_greedy_fill_plus_degree_b_search(self) -> Tuple[List[int], int]:
-        """
-        Greedy elimination ordering minimizing score = degree + fill-in.
-
-        Selection logic:
-            1. Select nodes minimizing score.
-            2. If tie, pick node with smaller degree.
-
-        Returns:
-            Tuple[List[int], int]: A tuple of (elimination_order, treewidth upper bound).
-        """
-        cost = 0
-        path = []
-        indices = self.indices.copy()
-        adj_matrix = self._adj_matrix.copy()
-        index_mapping = self._construct_index_mapping(indices)
-
-        # Preprocessing: eliminate indices that appear in only one position
-        for index in indices.copy():
-            if len(self.positions(index)) == 1:
-                position = index_mapping(index)
-                cost = max(cost, self._degree(adj_matrix, position))
-                adj_matrix = self._delete_index_(adj_matrix, position)
-                indices.remove(index)
-                path.append(index)
-                index_mapping = self._construct_index_mapping(indices)
-
-        while indices:
-            candidates = []
-
-            for i, index in enumerate(indices):
-                degree = self._degree(adj_matrix, i)
-                neighbors = np.where(adj_matrix[i])[0]
-
-                if degree <= 1:
-                    fill_in = 0
-                else:
-                    subgraph = adj_matrix[np.ix_(neighbors, neighbors)]
-                    existing_edges = np.sum(subgraph) // 2
-                    total_possible = degree * (degree - 1) // 2
-                    fill_in = total_possible - existing_edges
-
-                score = degree + fill_in
-                candidates.append((i, index, degree, score))
-
-            # Pick candidate with minimal score, break ties by degree
-            chosen = min(candidates, key=lambda x: (x[3], x[2]))
-
-            i, index, degree, score = chosen
-            cost = max(cost, degree)
-            path.append(index)
-            adj_matrix = self._eliminate_index_(adj_matrix, i)
-            indices.pop(i)
-            index_mapping = self._construct_index_mapping(indices)
-
-        return path, cost
-
 
     def computing_path(self, path: List[int]) -> Path:
         computing_path = []
@@ -800,9 +682,9 @@ class TensorExpression:
         return result
 
     @staticmethod
-    def _degree(adj_matrix: np.ndarray, index: int) -> int:
+    def _degree(adj_matrix: np.ndarray, index: int, with_diag: bool = True) -> int:
         vector = adj_matrix[index]
-        return np.sum(vector) - 1
+        return np.sum(vector) - 1 if with_diag else np.sum(vector)
 
     @staticmethod
     def _degeneracy(adj_matrix: np.ndarray) -> int:
@@ -866,8 +748,6 @@ class TensorExpression:
         "greedy-fill-in": greedy_fill_in_search,
         "double-greedy-degree-then-fill": double_greedy_degree_then_fill_search,
         "double-greedy-fill-then-degree": double_greedy_fill_then_degree_search,
-        "double-greedy-fill-minus-degree-a": double_greedy_fill_minus_degree_a_search,
-        "double-greedy-fill-minus-degree-b": double_greedy_fill_minus_degree_b_search,
-        "double-greedy-fill-plus-degree-a": double_greedy_fill_plus_degree_a_search,
-        "double-greedy-fill-plus-degree-b": double_greedy_fill_plus_degree_b_search,
+        "double-greedy-fill-minus-degree": double_greedy_fill_minus_degree_a_search,
+        "double-greedy-fill-plus-degree": double_greedy_fill_plus_degree_a_search,
     }
