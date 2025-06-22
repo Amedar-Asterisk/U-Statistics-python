@@ -9,12 +9,24 @@ from typing import (
     Union,
     overload,
     Dict,
+    MutableSequence,
 )
 from .._utils import standardize_indices, ALPHABET
 from math import factorial
 import numpy as np
 
 T = TypeVar("T", bound=Hashable)
+
+
+def get_adj_list(cover: MutableSequence[MutableSequence[T]]) -> Dict[T, Set[T]]:
+    adj_list = {}
+    for subset in cover:
+        for element in subset:
+            if element not in adj_list:
+                adj_list[element] = set()
+            adj_list[element].update(subset)
+            adj_list[element].discard(element)
+    return adj_list
 
 
 @overload
@@ -75,9 +87,15 @@ def get_all_partitions(
 
 
 def get_all_partitions_nonconnected(
-    adj_list: Dict[int, Set[Hashable]],
+    adj_list: Dict[int, Set[Hashable]], elements: Union[int, Sequence[T]] = None
 ) -> Generator[List[Set[Union[int, T]]], None, None]:
-    vertices = list(adj_list.keys())
+    if elements is None:
+        vertices = list(adj_list.keys())
+    else:
+        if isinstance(elements, int):
+            vertices = list(range(elements))
+        else:
+            vertices = list(elements)
     graph = adj_list
 
     def backtrack(
