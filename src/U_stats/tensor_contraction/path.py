@@ -722,7 +722,7 @@ class TensorExpression:
             adj_matrix = np.logical_or(adj_matrix, np.outer(vector, vector))
         return adj_matrix
 
-    
+    @staticmethod
     def _calculate_k(m: int) -> int:
         """
         Finds the largest integer k such that f(k) <= m,
