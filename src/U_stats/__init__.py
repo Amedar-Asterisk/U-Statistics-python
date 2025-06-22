@@ -26,7 +26,7 @@ def vstat(
     tensors: List[np.ndarray],
     expression: Expression,
     average: bool = True,
-    path_method: str = "2-greedy",
+    path_method: str = "double-greedy-degree-then-fill",
     summor: str = "numpy",
 ):
     return VStatsCalculator(expression=expression, summor=summor).calculate(
@@ -38,7 +38,7 @@ def ustat(
     tensors: List[np.ndarray],
     expression: Expression,
     average: bool = True,
-    path_method: str = "2-greedy",
+    path_method: str = "double-greedy-degree-then-fill",
     summor: str = "numpy",
 ) -> float:
     return UStatsCalculator(expression=expression, summor=summor).calculate(
