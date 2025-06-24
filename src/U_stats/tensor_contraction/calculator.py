@@ -96,7 +96,6 @@ class TensorContractionCalculator:
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
         expression: Expression | TensorExpression,
         path_method: str = "greedy",
-        print_cost: bool = False,
         _validate: bool = True,
         _init_expression=True,
         _init_tensor=True,
@@ -107,7 +106,5 @@ class TensorContractionCalculator:
             tensors = self._initalize_tensor_dict(tensors, expression.shape)
         if _validate:
             self._validate_inputs(tensors, expression.shape)
-        path, cost = expression.path(path_method)
-        if print_cost:
-            print(f"The max rank of complexity is {cost}.")
+        path, _ = expression.path(path_method)
         return self._tensor_contract(tensors, path)
