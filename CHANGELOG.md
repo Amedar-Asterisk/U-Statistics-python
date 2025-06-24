@@ -1,3 +1,9 @@
+## 0.4.1 (2025-06-24)
+
+### Perf
+
+- **all-about-selection-of-backend**: optimiza the selection of backend; use set_backend to select and with Backend(...) to temporarily change backend
+
 ## 0.4.0 (2025-06-24)
 
 ### Feat

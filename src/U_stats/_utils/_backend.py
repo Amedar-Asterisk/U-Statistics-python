@@ -116,6 +116,17 @@ class _Backend:
 
         return tensors
 
+    def __enter__(self):
+        self.previous_backend = BACKEND
+        global BACKEND
+        BACKEND = self
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        global BACKEND
+        BACKEND = self.previous_backend
+        self.previous_backend = None
+
 
 BACKEND = _Backend("numpy", "cpu")
 
