@@ -259,17 +259,17 @@ class TensorExpression:
             adj_matrix = self._eliminate_index_(adj_matrix, min_cost_position)
 
         return path, cost
-    
+
     def greedy_fill_in_search(self) -> Tuple[List[int], int]:
         cost = 0
         path = []
         indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
-        np.fill_diagonal(matrix_copy, 0)
+        np.fill_diagonal(adj_matrix, 0)
         index_mapping = self._construct_index_mapping(indices)
 
         while indices:
-            min_fill = float('inf')
+            min_fill = float("inf")
             best_position = -1
             best_degree = -1
 
@@ -307,8 +307,9 @@ class TensorExpression:
 
         Selection logic:
             1. Choose nodes with the minimum degree.
-            2. If multiple nodes share the minimum degree, select the one minimizing fill-in,
-            i.e., the node whose neighbors form the most edges among themselves (to minimize new edges added).
+            2. If multiple nodes share the minimum degree,
+        select the one minimizing fill-in, i.e., the node whose neighbors
+        form the most edges among themselves (to minimize new edges added).
         """
 
         cost = 0
@@ -359,85 +360,93 @@ class TensorExpression:
             adj_matrix = self._eliminate_index_(adj_matrix, min_cost_position)
 
         return path, cost
-    
+
     def double_greedy_fill_then_degree_search(self) -> Tuple[List[int], int]:
-            """
-            Elimination ordering heuristic prioritizing minimal fill-in.
-
-            Selection logic:
-                1. Choose the node with the smallest fill-in (i.e., would add the fewest new edges).
-                2. If multiple nodes have the same fill-in, choose the one with the smallest degree.
-
-            Returns:
-                Tuple[List[int], int]: The elimination order and an upper bound on treewidth.
-            """
-            cost = 0
-            path = []
-            indices = self.indices.copy()
-            adj_matrix = self._adj_matrix.copy()
-            np.fill_diagonal(matrix_copy, 0)
-            index_mapping = self._construct_index_mapping(indices)
-            
-            # Preprocessing: eliminate indices appearing only once
-            for index in indices.copy():
-                if len(self.positions(index)) == 1:
-                    position = index_mapping(index)
-                    cost = max(cost, self._degree(adj_matrix, position, False))
-                    adj_matrix = self._delete_index_(adj_matrix, position)
-                    indices.remove(index)
-                    path.append(index)
-                    index_mapping = self._construct_index_mapping(indices)
-
-            while indices:
-                candidates = []
-
-                for pos, index in enumerate(indices):
-                    neighbors = np.where(adj_matrix[pos])[0]
-                    degree = len(neighbors)
-
-                    if degree <= 1:
-                        fill_in = 0
-                    else:
-                        subgraph = adj_matrix[np.ix_(neighbors, neighbors)]
-                        existing_edges = np.sum(subgraph) // 2
-                        total_possible = degree * (degree - 1) // 2
-                        fill_in = total_possible - existing_edges
-
-                    candidates.append((pos, index, fill_in, degree))
-
-                # Primary: min fill-in; tie-breaker: min degree
-                chosen = min(candidates, key=lambda x: (x[2], x[3]))
-                pos, index, fill_in, degree = chosen
-
-                cost = max(cost, degree)
-                path.append(index)
-                adj_matrix = self._eliminate_index_(adj_matrix, pos)
-                indices.pop(pos)
-                index_mapping = self._construct_index_mapping(indices)
-
-            return path, cost
-
-    
-    def double_greedy_fill_minus_degree_search(self) -> Tuple[List[int], int]:
         """
-        Heuristic elimination ordering using (fill-in - degree) cost and a dynamic degree bound (k).
+        Elimination ordering heuristic prioritizing minimal fill-in.
 
         Selection logic:
-            1. Prefer nodes with negative cost = fill-in - degree (i.e., low fill-in and degree),
-            and among them, pick the one with the smallest degree.
-            2. If no negative-cost nodes exist, consider nodes with non-negative cost and degree ≤ k-1,
-            choosing the one with highest cost (i.e., maximum fill saving) and smallest degree.
-            3. If no such candidates are available, fall back to any node with minimal cost and largest degree.
+            1. Choose the node with the smallest fill-in
+        (i.e., would add the fewest new edges).
+            2. If multiple nodes have the same fill-in,
+        choose the one with the smallest degree.
 
         Returns:
-            Tuple[List[int], int]: The elimination order and an upper bound on treewidth.
+            Tuple[List[int], int]: The elimination order
+        and an upper bound on treewidth.
+        """
+        cost = 0
+        path = []
+        indices = self.indices.copy()
+        adj_matrix = self._adj_matrix.copy()
+        np.fill_diagonal(adj_matrix, 0)
+        index_mapping = self._construct_index_mapping(indices)
+
+        # Preprocessing: eliminate indices appearing only once
+        for index in indices.copy():
+            if len(self.positions(index)) == 1:
+                position = index_mapping(index)
+                cost = max(cost, self._degree(adj_matrix, position, False))
+                adj_matrix = self._delete_index_(adj_matrix, position)
+                indices.remove(index)
+                path.append(index)
+                index_mapping = self._construct_index_mapping(indices)
+
+        while indices:
+            candidates = []
+
+            for pos, index in enumerate(indices):
+                neighbors = np.where(adj_matrix[pos])[0]
+                degree = len(neighbors)
+
+                if degree <= 1:
+                    fill_in = 0
+                else:
+                    subgraph = adj_matrix[np.ix_(neighbors, neighbors)]
+                    existing_edges = np.sum(subgraph) // 2
+                    total_possible = degree * (degree - 1) // 2
+                    fill_in = total_possible - existing_edges
+
+                candidates.append((pos, index, fill_in, degree))
+
+            # Primary: min fill-in; tie-breaker: min degree
+            chosen = min(candidates, key=lambda x: (x[2], x[3]))
+            pos, index, fill_in, degree = chosen
+
+            cost = max(cost, degree)
+            path.append(index)
+            adj_matrix = self._eliminate_index_(adj_matrix, pos)
+            indices.pop(pos)
+            index_mapping = self._construct_index_mapping(indices)
+
+        return path, cost
+
+    def double_greedy_fill_minus_degree_search(self) -> Tuple[List[int], int]:
+        """
+        Heuristic elimination ordering using (fill-in - degree)
+        cost and a dynamic degree bound (k).
+
+        Selection logic:
+            1. Prefer nodes with negative cost = fill-in -
+            degree (i.e., low fill-in and degree), and among them,
+            pick the one with the smallest degree.
+            2. If no negative-cost nodes exist, consider nodes
+            with non-negative cost and degree ≤ k-1,
+            choosing the one with highest cost
+            (i.e., maximum fill saving) and smallest degree.
+            3. If no such candidates are available,
+            fall back to any node with minimal cost and largest degree.
+
+        Returns:
+            Tuple[List[int], int]: The elimination order
+        and an upper bound on treewidth.
         """
 
         cost = 0
         path = []
         indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
-        np.fill_diagonal(matrix_copy, 0)
+        np.fill_diagonal(adj_matrix, 0)
         index_mapping = self._construct_index_mapping(indices)
 
         # Preprocessing: eliminate indices with only one position
@@ -481,7 +490,11 @@ class TensorExpression:
             neg_cost_nodes = [(p, i, d, c) for p, i, d, c in candidates if c < 0]
 
             # Phase 2: nodes with acceptable degree and non-negative cost
-            nonneg_cost_nodes = [(p, i, d, c) for p, i, d, c in candidates if c >= 0 and d <= max_allowed_degree]
+            nonneg_cost_nodes = [
+                (p, i, d, c)
+                for p, i, d, c in candidates
+                if c >= 0 and d <= max_allowed_degree
+            ]
 
             if neg_cost_nodes:
                 # Select node with smallest degree and lowest cost
@@ -507,7 +520,8 @@ class TensorExpression:
 
     def double_greedy_fill_plus_degree_search(self) -> Tuple[List[int], int]:
         """
-        Heuristic elimination ordering based on score = degree + fill-in with dynamic threshold (k).
+        Heuristic elimination ordering based on
+        score = degree + fill-in with dynamic threshold (k).
 
         Selection logic:
             1. Prefer nodes with score <= max_allowed_degree + fill-in (tied to k).
@@ -516,13 +530,14 @@ class TensorExpression:
             4. Tie-break by smallest degree or highest fill-in accordingly.
 
         Returns:
-            Tuple[List[int], int]: The elimination order and an upper bound on treewidth.
+            Tuple[List[int], int]: The elimination order
+        and an upper bound on treewidth.
         """
         cost = 0
         path = []
         indices = self.indices.copy()
         adj_matrix = self._adj_matrix.copy()
-        np.fill_diagonal(matrix_copy, 0)
+        np.fill_diagonal(adj_matrix, 0)
         index_mapping = self._construct_index_mapping(indices)
 
         # Preprocessing: eliminate indices appearing in only one position
@@ -739,8 +754,6 @@ class TensorExpression:
             k += 1
         return k - 1
 
-
-            
     _METHOD_ = {
         "exhaustive": exhaustive_search,
         "bb": branch_and_bound_search,

@@ -109,9 +109,12 @@ class UStatsCalculator(TensorContractionCalculator):
         return result
 
     def caculate_non_diag(
-        self, tensors: List[np.ndarray], average=True, path_method="double-greedy-degree-then-fill"
+        self,
+        tensors: List[np.ndarray],
+        average=True,
+        path_method="double-greedy-degree-then-fill",
     ) -> float:
-        """Calculate the U statistics of a list of kernel matrices(tensors)
+        """Calculate the U statistics of a list of kernel tensors
         with particular expression.
 
         Args:

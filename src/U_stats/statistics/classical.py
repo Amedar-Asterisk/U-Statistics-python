@@ -73,10 +73,10 @@ def set_backend(backend_name, device="cpu"):
     _backend = Backend(backend_name, device)
 
 
-sign_backend = lambda x: _backend.sign(x)
-einsum_backend = lambda eq, *ops: _backend.einsum(eq, *ops)
-prod_backend = lambda x: _backend.prod(x)
-zeros_backend = lambda *args, **kwargs: _backend.zeros(*args, **kwargs)
+sign_backend = _backend.sign
+einsum_backend = _backend.einsum
+prod_backend = _backend.prod
+zeros_backend = _backend.zeros
 
 
 @dataclass
@@ -172,7 +172,8 @@ def _spearman_kernel(X: np.ndarray) -> np.ndarray:
     -------
     np.ndarray
         A n x n x p tensor representing the Spearman's kernel.
-        T[i, j, p] = sign(X[i, p] - X[j, p]) for all i, j in {0, ..., n-1} and p in {0, ..., p-1}.
+        T[i, j, p] = sign(X[i, p] - X[j, p]) for all i, j in {0, ..., n-1}
+    and p in {0, ..., p-1}.
     """
     Xi = X[:, np.newaxis, :]
     Xj = X[np.newaxis, :, :]
@@ -320,7 +321,8 @@ def _bergsma_dassios_kernel(X: np.ndarray) -> np.ndarray:
     -------
     T: np.ndarray
         A n x n x p tensor representing the Bergsma-Dassios kernel.
-        T[i, j, p] = 1(X[i, p] < X[j, p]) for all i, j in {0, ..., n-1} and p in {0, ..., p-1}.
+        T[i, j, p] = 1(X[i, p] < X[j, p]) for all i, j in {0, ..., n-1}
+    and p in {0, ..., p-1}.
     """
 
     Xi = X[:, np.newaxis, :]
@@ -427,7 +429,8 @@ def _hoeffding_d_kernel(X: np.ndarray) -> np.ndarray:
     -------
     T: np.ndarray
         A n x n x p tensor representing the Hoeffding D kernel.
-        T[i, j, p] = 1(X[i, p] > X[j, p]) for all i, j in {0, ..., n-1} and p in {0, ..., p-1}.
+        T[i, j, p] = 1(X[i, p] > X[j, p]) for all i, j in {0, ..., n-1}
+    and p in {0, ..., p-1}.
     """
 
     Xi = X[:, np.newaxis, :]
