@@ -1,6 +1,6 @@
 import numpy as np
 from .path import TensorExpression
-from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
+from typing import List, Dict, Tuple, Union, Hashable, Set
 from .._utils import Expression, BACKEND
 
 
