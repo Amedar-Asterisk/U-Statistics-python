@@ -6,4 +6,5 @@ data/*
 *.pyc
 .tox/*
 temp/*
-playground/*
+experiments/*
+src/U_stats.egg-info/*

@@ -20,7 +20,7 @@ try:
     _DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def _to_device(
-        self, tensor: np.ndarray | torch.Tensor, device: torch.device = _DEVICE
+        tensor: np.ndarray | torch.Tensor, device: torch.device = _DEVICE
     ) -> torch.Tensor:
         if isinstance(tensor, np.ndarray):
             return torch.tensor(tensor, device=device)
