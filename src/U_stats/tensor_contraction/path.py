@@ -641,7 +641,6 @@ class TensorExpression:
         path_info.input_subscripts = self.eq
         path_info.output_subscript = ""
         path_info.indices = numbers_to_letters(self.indices)[0]
-        print(f"Indices: {path_info.indices}")
         path_info.size_dict = {index: size for index in path_info.indices}
         path_info.shapes = [(size,) * len(pair) for pair in self._pair_dict.values()]
         for positions, computing_format in path:

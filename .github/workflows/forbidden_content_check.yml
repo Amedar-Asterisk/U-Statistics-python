@@ -1,4 +1,4 @@
-name: CI-Chinese
+name: CI-Forbidden Content Check
 
 on:
   pull_request:
@@ -18,3 +18,4 @@ jobs:
       - name: Run Chinese check script
         run: |
           python CHECKING/no_chinese.py
+          python CHECKING/no_print.py
