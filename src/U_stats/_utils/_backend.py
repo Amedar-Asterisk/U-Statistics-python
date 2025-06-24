@@ -1,5 +1,5 @@
 import itertools
-from typing import Dict, Union, Any, Callable
+from typing import Dict, Union, Any, Callable, Optional, List, Tuple, TypeVar
 import numpy as np
 
 try:
@@ -9,28 +9,18 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
 
+TensorType = TypeVar("TensorType", np.ndarray, "torch.Tensor")
+ShapeType = Union[Tuple[int, ...], List[int]]
+DType = Union[np.dtype, torch.dtype, None]
 
-class _Backend:
 
-    def __init__(self, backend="numpy", device="cpu"):
-        self.backend = backend.lower()
-        if self.backend not in ["numpy", "torch"]:
-            raise ValueError("Backend must be either 'numpy' or 'torch'")
-        if self.backend == "torch" and not TORCH_AVAILABLE:
-            raise ImportError("PyTorch is not available. Please install it first.")
+class Backend:
+    def __init__(self, backend: str = "numpy", device: str = "cpu") -> None:
+        self.backend: str = backend.lower()
+        self.device: str = device.lower()
+        self.previous_backend: Optional["Backend"] = None
 
-        self.device = device.lower()
-        if self.backend == "torch":
-            if self.device is None:
-                self.device = torch.device(
-                    "cuda" if torch.cuda.is_available() else "cpu"
-                )
-            if self.device not in ["cpu", "cuda"]:
-                raise ValueError("Device must be either 'cpu' or 'cuda'")
-            if self.device == "cuda" and not torch.cuda.is_available():
-                raise RuntimeError("CUDA is not available on this machine")
-
-        self._ops = {
+        self._ops: Dict[str, Dict[str, Callable]] = {
             "numpy": {
                 "to_tensor": np.asarray,
                 "zeros": np.zeros,
@@ -65,50 +55,56 @@ class _Backend:
     def _get_op(self, name: str) -> Callable:
         return self._ops[self.backend][name]
 
-    def to_tensor(self, x):
+    def to_tensor(self, x: Any) -> TensorType:
         return self._get_op("to_tensor")(x)
 
-    def zeros(self, shape, dtype=None):
+    def zeros(self, shape: ShapeType, dtype: DType = None) -> TensorType:
         return self._get_op("zeros")(shape, dtype)
 
-    def sign(self, x):
+    def sign(self, x: TensorType) -> TensorType:
         return self._get_op("sign")(x)
 
-    def einsum(self, equation, *operands):
+    def einsum(self, equation: str, *operands: TensorType) -> TensorType:
         return self._get_op("einsum")(equation, *operands)
 
-    def prod(self, range_tuple):
+    def prod(
+        self, range_tuple: Union[range, List[int], Tuple[int, ...]]
+    ) -> Union[int, float]:
         if isinstance(range_tuple, range):
             numbers = list(range_tuple)
         else:
             numbers = range_tuple
         return self._get_op("prod")(numbers)
 
-    def generate_mask_tensor(self, ndim: int, dim: int, index1: int, index2: int):
-        shape1 = [1] * ndim
+    def generate_mask_tensor(
+        self, ndim: int, dim: int, index1: int, index2: int
+    ) -> TensorType:
+        shape1: List[int] = [1] * ndim
         shape1[index1] = dim
-        shape2 = [1] * ndim
+        shape2: List[int] = [1] * ndim
         shape2[index2] = dim
 
-        idx1 = self._get_op("arange")(dim).reshape(shape1)
-        idx2 = self._get_op("arange")(dim).reshape(shape2)
-        mask = idx1 == idx2
+        idx1: TensorType = self._get_op("arange")(dim).reshape(shape1)
+        idx2: TensorType = self._get_op("arange")(dim).reshape(shape2)
+        mask: TensorType = idx1 == idx2
         return self._get_op("broadcast_to")(mask, (dim,) * ndim)
 
     def dediag_tensors(
-        self, tensors: Dict[int, Union[np.ndarray, torch.Tensor]], sample_size: int
-    ) -> Dict[int, Union[np.ndarray, torch.Tensor]]:
-        masks = {}
+        self, tensors: Dict[int, TensorType], sample_size: int
+    ) -> Dict[int, TensorType]:
+        masks: Dict[int, TensorType] = {}
 
         for index, tensor in tensors.items():
-            ndim = self._get_op("ndim")(tensor)
+            ndim: int = self._get_op("ndim")(tensor)
             if ndim > 1:
                 if ndim not in masks:
-                    mask_total = self._get_op("zeros")(
+                    mask_total: TensorType = self._get_op("zeros")(
                         (sample_size,) * ndim, dtype=bool
                     )
                     for i, j in itertools.combinations(range(ndim), 2):
-                        mask = self.generate_mask_tensor(ndim, sample_size, i, j)
+                        mask: TensorType = self.generate_mask_tensor(
+                            ndim, sample_size, i, j
+                        )
                         mask_total |= mask
                     masks[ndim] = ~mask_total
 
@@ -116,21 +112,26 @@ class _Backend:
 
         return tensors
 
-    def __enter__(self):
+    def __enter__(self) -> "Backend":
         self.previous_backend = BACKEND
         global BACKEND
         BACKEND = self
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_value: Optional[Exception],
+        traceback: Optional[Any],
+    ) -> None:
         global BACKEND
         BACKEND = self.previous_backend
         self.previous_backend = None
 
 
-BACKEND = _Backend("numpy", "cpu")
+BACKEND: Backend = Backend("numpy", "cpu")
 
 
-def set_backend(backend_name, device="cpu"):
+def set_backend(backend_name: str, device: str = "cpu") -> None:
     global BACKEND
-    BACKEND = _Backend(backend_name, device)
+    BACKEND = Backend(backend_name, device)
