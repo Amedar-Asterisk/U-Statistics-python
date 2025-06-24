@@ -1,3 +1,9 @@
+## 0.4.2 (2025-06-24)
+
+### Fix
+
+- **path.py-_backend.py-__init__.py**: add type hint to _backend.py，fix bug of path method 2-greedy-degree-then-fill
+
 ## 0.4.1 (2025-06-24)
 
 ### Perf
