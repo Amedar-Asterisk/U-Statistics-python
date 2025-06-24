@@ -3,7 +3,7 @@ torch
 opt_einsum
 cotengra
 
-[deployment]
+# [deployment]
 flake8
 black
 docformatter
