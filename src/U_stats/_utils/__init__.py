@@ -10,12 +10,7 @@ from ._alphabet import (
     ALPHABET,
 )
 
-from ._backend import (
-    BACKEND,
-    _to_device,
-    _torch_mask_tensor,
-    _torch_mask_tensors,
-)
+from ._backend import BACKEND, set_backend
 
 __all__ = [
     "standardize_indices",

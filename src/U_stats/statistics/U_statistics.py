@@ -3,7 +3,7 @@ from ..tensor_contraction.calculator import TensorContractionCalculator
 from typing import List, Hashable, Generator, Tuple, Dict, Set
 from functools import cached_property
 from .U2V import get_all_partitions, partition_weight, get_all_partitions_nonconnected
-from .._utils import Expression, standardize_indices
+from .._utils import Expression, standardize_indices, BACKEND
 import numpy as np
 import itertools
 
@@ -70,14 +70,7 @@ class UStatsCalculator(TensorContractionCalculator):
     """A class for calculating the U statistics of a list of kernel
     matrices(tensors) with particular expression."""
 
-    def __init__(self, expression: Expression, summor: str = "numpy"):
-        """Initialize UStatsCalculator with specified tensor contraction
-        backend.
-
-        Args:
-            summor: str, either "numpy" or "torch"
-        """
-        TensorContractionCalculator.__init__(self, summor)
+    def __init__(self, expression: Expression):
         self.expression = UExpression(expression)
         self.order = self.expression.order
         self.shape = self.expression.shape
@@ -99,13 +92,13 @@ class UStatsCalculator(TensorContractionCalculator):
         result = 0
         subexpressions = self.expression.subexpressions()
         for weight, subexpression in subexpressions:
-            path, cost = subexpression.path(path_method)
+            path, _ = subexpression.path(path_method)
             result += weight * TensorContractionCalculator._tensor_contract(
                 self, tensors.copy(), path
             )
         if average:
             n_samples = tensors[0].shape[0]
-            return result / np.prod(range(n_samples, n_samples - self.order, -1))
+            return result / BACKEND.prod(range(n_samples, n_samples - self.order, -1))
         return result
 
     def caculate_non_diag(
@@ -126,49 +119,18 @@ class UStatsCalculator(TensorContractionCalculator):
         tensors = self._initalize_tensor_dict(tensors, self.shape)
         self._validate_inputs(tensors, self.shape)
         n_samples = tensors[0].shape[0]
-        if self.summor_name == "numpy":
-            tensors = self._mask_tensors(tensors, n_samples)
-        elif self.summor_name == "torch":
-            tensors = self._torch_mask_tensors(tensors, n_samples, self.device)
+        tensors = BACKEND.dediag_tensors(tensors, n_samples)
 
         result = 0
         subexpressions = self.expression.non_diag_subexpressions()
         for weight, subexpression in subexpressions:
-            path, cost = subexpression.path(path_method)
+            path, _ = subexpression.path(path_method)
             result += weight * TensorContractionCalculator._tensor_contract(
                 self, tensors.copy(), computing_path=path
             )
         if average:
-            return result / np.prod(range(n_samples, n_samples - self.order, -1))
+            return result / BACKEND.prod(range(n_samples, n_samples - self.order, -1))
         return result
-
-    @staticmethod
-    def _mask_tensors(
-        tensors: Dict[int, np.ndarray], sample_size: int
-    ) -> Dict[int, np.ndarray]:
-        shapes = {index: tensor.ndim for index, tensor in tensors.items()}
-        for index, ndim in shapes.items():
-            if ndim > 1:
-                mask_total = np.zeros((sample_size,) * ndim, dtype=bool)
-                for i, j in itertools.combinations(range(ndim), 2):
-                    mask = UStatsCalculator._mask_tensor(ndim, sample_size, i, j)
-                    mask_total |= mask
-                mask_total = np.logical_not(mask_total)
-                tensors[index] = tensors[index] * mask_total
-        return tensors
-
-    @staticmethod
-    def _mask_tensor(ndim: int, dim: int, index1: int, index2: int) -> np.ndarray:
-        shape1 = [1] * ndim
-        shape1[index1] = dim
-        shape2 = [1] * ndim
-        shape2[index2] = dim
-
-        idx1 = np.arange(dim).reshape(shape1)
-        idx2 = np.arange(dim).reshape(shape2)
-        mask = idx1 == idx2
-        mask = np.broadcast_to(mask, (dim,) * ndim)
-        return mask
 
 
 def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> float:

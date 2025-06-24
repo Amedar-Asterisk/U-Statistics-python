@@ -350,7 +350,7 @@ class TensorExpression:
                     edges = np.sum(adj_matrix[mask])
                     if edges > max_edges:
                         max_edges = edges
-                        min_cost_position = index
+                        min_cost_position = position
             else:
                 min_cost_position = min_cost_positions[0]
             min_index = indices[min_cost_position]
