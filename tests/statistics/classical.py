@@ -12,7 +12,7 @@ from itertools import permutations
 from U_stats import ustat
 
 
-def main():
+def test_sperman_rho():
     import torch
 
     n = 1000
@@ -36,4 +36,3 @@ def main():
 
 if __name__ == "__main__":
     set_backend("torch")
-    main()
