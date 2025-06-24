@@ -2,7 +2,7 @@
 
 ### Feat
 
-- **statistics-U2V**: add implemntation for 3 classical U-stats
+- **statistics-U2V**: add implementation for 3 classical U-stats
 
 ## 0.2.1 (2025-06-07)
 
