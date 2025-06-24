@@ -1,3 +1,9 @@
+## 0.4.0 (2025-06-24)
+
+### Feat
+
+- **path.py-CI**: add checking script to check code not having print; delete print in path.py
+
 ## 0.3.0 (2025-06-22)
 
 ### Feat
