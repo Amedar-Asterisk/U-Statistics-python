@@ -3,80 +3,13 @@ from .U2V import get_all_partitions, partition_weight
 from typing import List, Set
 import numpy as np
 
-try:
-    import torch
-
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
+from .._utils import BACKEND
 
 
-class Backend:
-    def __init__(self, backend="numpy", device="cpu"):
-        self.backend = backend.lower()
-        if self.backend not in ["numpy", "torch"]:
-            raise ValueError("Backend must be either 'numpy' or 'torch'")
-        if self.backend == "torch" and not TORCH_AVAILABLE:
-            raise ImportError("PyTorch is not available. Please install it first.")
-
-        self.device = device.lower()
-        if self.backend == "torch":
-            if self.device not in ["cpu", "cuda"]:
-                raise ValueError("Device must be either 'cpu' or 'cuda'")
-            if self.device == "cuda" and not torch.cuda.is_available():
-                raise RuntimeError("CUDA is not available on this machine")
-
-    def to_tensor(self, x):
-        if self.backend == "numpy":
-            return np.asarray(x)
-        else:
-            if isinstance(x, torch.Tensor):
-                return x.to(self.device)
-            return torch.tensor(x, device=self.device)
-
-    def zeros(self, shape, dtype=None):
-        if self.backend == "numpy":
-            return np.zeros(shape, dtype=dtype)
-        else:
-            return torch.zeros(shape, dtype=dtype, device=self.device)
-
-    def sign(self, x):
-        if self.backend == "numpy":
-            return np.sign(x)
-        else:
-            return torch.sign(self.to_tensor(x))
-
-    def einsum(self, equation, *operands):
-        if self.backend == "numpy":
-            return np.einsum(equation, *operands)
-        else:
-            operands = [self.to_tensor(op) for op in operands]
-            return torch.einsum(equation, *operands)
-
-    def prod(self, range_tuple):
-        if isinstance(range_tuple, range):
-            numbers = list(range_tuple)
-        else:
-            numbers = range_tuple
-
-        if self.backend == "numpy":
-            return np.prod(numbers)
-        else:
-            return torch.prod(self.to_tensor(numbers).float())
-
-
-_backend = Backend("numpy", "cpu")
-
-
-def set_backend(backend_name, device="cpu"):
-    global _backend
-    _backend = Backend(backend_name, device)
-
-
-sign_backend = _backend.sign
-einsum_backend = _backend.einsum
-prod_backend = _backend.prod
-zeros_backend = _backend.zeros
+sign_backend = BACKEND.sign
+einsum_backend = BACKEND.einsum
+prod_backend = BACKEND.prod
+zeros_backend = BACKEND.zeros
 
 
 @dataclass

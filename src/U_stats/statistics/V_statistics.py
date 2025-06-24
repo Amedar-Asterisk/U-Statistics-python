@@ -28,8 +28,7 @@ class VExpression(TensorExpression):
 
 class VStatsCalculator(TensorContractionCalculator):
 
-    def __init__(self, expression: Expression, summor: str = "numpy"):
-        super().__init__(summor)
+    def __init__(self, expression: Expression):
         self.expression = VExpression(expression)
         self.shape = self.expression.shape
         self.order = self.expression.order

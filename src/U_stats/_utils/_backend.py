@@ -1,70 +1,137 @@
 import itertools
-from typing import Dict
-
-BACKEND = {}
-
-ignore = True
-try:
-    import numpy as np
-
-    BACKEND["np"] = np.einsum
-except ImportError:
-    raise ImportError("Numpy is not installed. Please install numpy to use U_stats.")
-
+from typing import Dict, Union, Any, Callable, Optional, List, Tuple, TypeVar
+import numpy as np
 
 try:
     import torch
 
-    BACKEND["torch"] = torch.einsum
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
 
-    _DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+TensorType = TypeVar("TensorType", np.ndarray, "torch.Tensor")
+ShapeType = Union[Tuple[int, ...], List[int]]
+DType = Union[np.dtype, torch.dtype, None]
 
-    def _to_device(
-        tensor: np.ndarray | torch.Tensor, device: torch.device = _DEVICE
-    ) -> torch.Tensor:
-        if isinstance(tensor, np.ndarray):
-            return torch.tensor(tensor, device=device)
-        elif isinstance(tensor, torch.Tensor):
-            return tensor.to(device)
+
+class Backend:
+    def __init__(self, backend: str = "numpy", device: str = "cpu") -> None:
+        self.backend: str = backend.lower()
+        self.device: str = device.lower()
+        self.previous_backend: Optional["Backend"] = None
+
+        self._ops: Dict[str, Dict[str, Callable]] = {
+            "numpy": {
+                "to_tensor": np.asarray,
+                "zeros": np.zeros,
+                "sign": np.sign,
+                "einsum": np.einsum,
+                "prod": np.prod,
+                "arange": np.arange,
+                "ndim": lambda x: x.ndim,
+                "broadcast_to": np.broadcast_to,
+            },
+            "torch": {
+                "to_tensor": self._torch_to_tensor,
+                "zeros": lambda shape, dtype=None: torch.zeros(
+                    shape, dtype=dtype, device=self.device
+                ),
+                "sign": lambda x: torch.sign(self.to_tensor(x)),
+                "einsum": lambda eq, *ops: torch.einsum(
+                    eq, *[self.to_tensor(op) for op in ops]
+                ),
+                "prod": lambda x: torch.prod(self.to_tensor(x).float()),
+                "arange": lambda dim: torch.arange(dim, device=self.device),
+                "ndim": lambda x: x.dim(),
+                "broadcast_to": lambda x, shape: x.broadcast_to(shape),
+            },
+        }
+
+    def _torch_to_tensor(self, x: Any) -> torch.Tensor:
+        if isinstance(x, torch.Tensor):
+            return x.to(self.device)
+        return torch.tensor(x, device=self.device)
+
+    def _get_op(self, name: str) -> Callable:
+        return self._ops[self.backend][name]
+
+    def to_tensor(self, x: Any) -> TensorType:
+        return self._get_op("to_tensor")(x)
+
+    def zeros(self, shape: ShapeType, dtype: DType = None) -> TensorType:
+        return self._get_op("zeros")(shape, dtype)
+
+    def sign(self, x: TensorType) -> TensorType:
+        return self._get_op("sign")(x)
+
+    def einsum(self, equation: str, *operands: TensorType) -> TensorType:
+        return self._get_op("einsum")(equation, *operands)
+
+    def prod(
+        self, range_tuple: Union[range, List[int], Tuple[int, ...]]
+    ) -> Union[int, float]:
+        if isinstance(range_tuple, range):
+            numbers = list(range_tuple)
         else:
-            raise TypeError(
-                f"Expected a numpy array or torch tensor, but got {type(tensor)}."
-            )
+            numbers = range_tuple
+        return self._get_op("prod")(numbers)
 
-    def _torch_mask_tensor(
-        ndim: int, dim: int, index1: int, index2: int, device: torch.device = _DEVICE
-    ) -> torch.Tensor:
-        shape1 = [1] * ndim
+    def generate_mask_tensor(
+        self, ndim: int, dim: int, index1: int, index2: int
+    ) -> TensorType:
+        shape1: List[int] = [1] * ndim
         shape1[index1] = dim
-        shape2 = [1] * ndim
+        shape2: List[int] = [1] * ndim
         shape2[index2] = dim
 
-        idx1 = torch.arange(dim, device=device).reshape(shape1)
-        idx2 = torch.arange(dim, device=device).reshape(shape2)
-        mask = idx1 == idx2
-        mask = mask.broadcast_to((dim,) * ndim)
-        return mask
+        idx1: TensorType = self._get_op("arange")(dim).reshape(shape1)
+        idx2: TensorType = self._get_op("arange")(dim).reshape(shape2)
+        mask: TensorType = idx1 == idx2
+        return self._get_op("broadcast_to")(mask, (dim,) * ndim)
 
-    def _torch_mask_tensors(
-        tensors: Dict[int, torch.Tensor],
-        sample_size: int,
-        device: torch.device = _DEVICE,
-    ) -> Dict[int, torch.Tensor]:
-        shapes = {index: tensor.dim() for index, tensor in tensors.items()}
-        for index, ndim in shapes.items():
+    def dediag_tensors(
+        self, tensors: Dict[int, TensorType], sample_size: int
+    ) -> Dict[int, TensorType]:
+        masks: Dict[int, TensorType] = {}
+
+        for index, tensor in tensors.items():
+            ndim: int = self._get_op("ndim")(tensor)
             if ndim > 1:
-                mask_total = torch.zeros(
-                    (sample_size,) * ndim, dtype=torch.bool, device=device
-                )
-                for i, j in itertools.combinations(range(ndim), 2):
-                    mask = _torch_mask_tensor(ndim, sample_size, i, j, device)
-                    mask_total |= mask
-                mask_total = ~mask_total
-                tensors[index] = tensors[index] * mask_total
+                if ndim not in masks:
+                    mask_total: TensorType = self._get_op("zeros")(
+                        (sample_size,) * ndim, dtype=bool
+                    )
+                    for i, j in itertools.combinations(range(ndim), 2):
+                        mask: TensorType = self.generate_mask_tensor(
+                            ndim, sample_size, i, j
+                        )
+                        mask_total |= mask
+                    masks[ndim] = ~mask_total
+
+                tensors[index] = tensors[index] * masks[ndim]
+
         return tensors
 
-except ImportError:
-    if ignore:
-        pass
-    else:
-        raise ImportError("Torch is not installed. torch.einsum is unavailable.")
+    def __enter__(self) -> "Backend":
+        self.previous_backend = BACKEND
+        global BACKEND
+        BACKEND = self
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_value: Optional[Exception],
+        traceback: Optional[Any],
+    ) -> None:
+        global BACKEND
+        BACKEND = self.previous_backend
+        self.previous_backend = None
+
+
+BACKEND: Backend = Backend("numpy", "cpu")
+
+
+def set_backend(backend_name: str, device: str = "cpu") -> None:
+    global BACKEND
+    BACKEND = Backend(backend_name, device)

@@ -1,3 +1,21 @@
+## 0.4.2 (2025-06-24)
+
+### Fix
+
+- **path.py-_backend.py-__init__.py**: add type hint to _backend.py，fix bug of path method 2-greedy-degree-then-fill
+
+## 0.4.1 (2025-06-24)
+
+### Perf
+
+- **all-about-selection-of-backend**: optimiza the selection of backend; use set_backend to select and with Backend(...) to temporarily change backend
+
+## 0.4.0 (2025-06-24)
+
+### Feat
+
+- **path.py-CI**: add checking script to check code not having print; delete print in path.py
+
 ## 0.3.0 (2025-06-22)
 
 ### Feat

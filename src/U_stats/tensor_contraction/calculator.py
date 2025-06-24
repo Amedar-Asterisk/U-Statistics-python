@@ -1,26 +1,13 @@
 import numpy as np
 from .path import TensorExpression
-from typing import List, Dict, Tuple, Union, Callable, Hashable, Set
-from .._utils import Expression, _to_device
+from typing import List, Dict, Tuple, Union, Hashable, Set
+from .._utils import Expression, BACKEND
 
 
 class TensorContractionCalculator:
 
-    def __init__(self, summor: str = "numpy"):
-        self.summor = self._initialize_summor(summor)
-        self.summor_name = summor
-
-    def _initialize_summor(self, summor: str) -> Callable:
-        if summor == "numpy":
-            return np.einsum
-        elif summor == "torch":
-            import torch
-
-            return torch.einsum
-        else:
-            raise ValueError(
-                f"Invalid summor: {summor}. It should be either 'numpy' or 'torch'."
-            )
+    def __init__(self):
+        return
 
     def _initalize_expression(
         self, expression: Union[List[List[Hashable]], List[str]]
@@ -32,31 +19,20 @@ class TensorContractionCalculator:
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> Dict[int, np.ndarray]:
-        if self.summor_name == "torch":
-            import torch  # noqa: F401
 
-            if isinstance(tensors, list):
-                tensors = {
-                    i: _to_device(tensor)
-                    for i, tensor in enumerate(tensors)
-                    if shape[i] > 0
-                }
-            elif isinstance(tensors, dict):
-                tensors = {
-                    i: _to_device(tensor)
-                    for i, tensor in tensors.items()
-                    if shape[i] > 0
-                }
-            return tensors
-        elif self.summor_name == "numpy":
-            if isinstance(tensors, list):
-                return {i: tensor for i, tensor in enumerate(tensors) if shape[i] > 0}
-            elif isinstance(tensors, dict):
-                return {i: tensor for i, tensor in tensors.items() if shape[i] > 0}
-            raise ValueError(
-                f"Invalid input: tensors must be a list "
-                f"or a dictionary but it is {type(tensors)}."
-            )
+        if isinstance(tensors, list):
+            tensors = {
+                i: BACKEND.to_tensor(tensor)
+                for i, tensor in enumerate(tensors)
+                if shape[i] > 0
+            }
+        elif isinstance(tensors, dict):
+            tensors = {
+                i: BACKEND.to_tensor(tensor)
+                for i, tensor in tensors.items()
+                if shape[i] > 0
+            }
+        return tensors
 
     def _validate_inputs(
         self,
@@ -81,22 +57,19 @@ class TensorContractionCalculator:
         position_number = max(tensor_dict.keys()) + 1
         for positions, format in computing_path:
             tensors = [tensor_dict[i] for i in positions]
-            result = self.summor(format, *tensors)
+            result = BACKEND.einsum(format, *tensors)
             for i in positions:
                 tensor_dict.pop(i)
             tensor_dict[position_number] = result
             position_number += 1
-        if self.summor_name == "numpy":
-            return np.prod(list(tensor_dict.values()))
-        elif self.summor_name == "torch":
-            return np.prod([value.cpu().numpy() for value in tensor_dict.values()])
+
+        return BACKEND.prod(list(tensor_dict.values()))
 
     def calculate(
         self,
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
         expression: Expression | TensorExpression,
         path_method: str = "greedy",
-        print_cost: bool = False,
         _validate: bool = True,
         _init_expression=True,
         _init_tensor=True,
@@ -107,7 +80,5 @@ class TensorContractionCalculator:
             tensors = self._initalize_tensor_dict(tensors, expression.shape)
         if _validate:
             self._validate_inputs(tensors, expression.shape)
-        path, cost = expression.path(path_method)
-        if print_cost:
-            print(f"The max rank of complexity is {cost}.")
+        path, _ = expression.path(path_method)
         return self._tensor_contract(tensors, path)

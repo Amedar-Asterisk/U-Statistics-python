@@ -10,12 +10,7 @@ from ._alphabet import (
     ALPHABET,
 )
 
-from ._backend import (
-    BACKEND,
-    _to_device,
-    _torch_mask_tensor,
-    _torch_mask_tensors,
-)
+from ._backend import BACKEND, set_backend, Backend
 
 __all__ = [
     "standardize_indices",
@@ -23,8 +18,7 @@ __all__ = [
     "einsum_equation_to_expression",
     "expression_to_einsum_equation",
     "ALPHABET",
+    "set_backend",
+    "Backend",
     "BACKEND",
-    "_to_device",
-    "_torch_mask_tensor",
-    "_torch_mask_tensors",
 ] + _typing.__all__
