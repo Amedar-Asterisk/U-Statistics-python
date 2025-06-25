@@ -20,8 +20,8 @@ class Backend:
 
         if self.backend not in ["numpy", "torch"]:
             raise ValueError(
-                f"Unsupported backend: {self.backend}.",  
-                "Supported backends: 'numpy', 'torch'", 
+                f"Unsupported backend: {self.backend}.",
+                "Supported backends: 'numpy', 'torch'",
             )
 
         if self.backend == "torch" and not TORCH_AVAILABLE:
