@@ -25,7 +25,8 @@ class Backend:
 
         if self.backend == "torch" and not TORCH_AVAILABLE:
             raise ImportError(
-                "PyTorch is not available. Please install torch to use the 'torch' backend."
+                "PyTorch is not available. ",
+                "Please install torch to use the 'torch' backend.",
             )
 
         self.previous_backend: Optional["Backend"] = None
