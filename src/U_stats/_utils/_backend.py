@@ -58,7 +58,7 @@ class Backend:
             },
         }
 
-    def _init_divice(self):
+    def _init_device(self):
         if self.backend == "torch":
             if not TORCH_AVAILABLE:
                 raise ImportError("PyTorch is not available. Please install torch.")
