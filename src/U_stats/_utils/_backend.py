@@ -113,8 +113,8 @@ class Backend:
         return tensors
 
     def __enter__(self) -> "Backend":
-        self.previous_backend = BACKEND
         global BACKEND
+        self.previous_backend = BACKEND
         BACKEND = self
         return self
 

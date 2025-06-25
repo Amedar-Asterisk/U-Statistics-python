@@ -1,5 +1,5 @@
 from typing import Sequence, Union, Hashable, List, Tuple, Dict
-from opt_einsum.contract import ContractionListType, ArrayIndexType, PathType
+from opt_einsum.typing import ContractionListType, ArrayIndexType, PathType
 
 __all__ = [
     "Expression",
