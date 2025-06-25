@@ -15,9 +15,19 @@ DType = Union[np.dtype, torch.dtype, None]
 
 
 class Backend:
-    def __init__(self, backend: str = "numpy", device: str = "cpu") -> None:
+    def __init__(self, backend: str = "numpy", device: str = None) -> None:
         self.backend: str = backend.lower()
-        self.device: str = device.lower()
+
+        if self.backend not in ["numpy", "torch"]:
+            raise ValueError(
+                f"Unsupported backend: {self.backend}. Supported backends: 'numpy', 'torch'"
+            )
+
+        if self.backend == "torch" and not TORCH_AVAILABLE:
+            raise ImportError(
+                "PyTorch is not available. Please install torch to use the 'torch' backend."
+            )
+
         self.previous_backend: Optional["Backend"] = None
 
         self._ops: Dict[str, Dict[str, Callable]] = {
@@ -46,6 +56,19 @@ class Backend:
                 "broadcast_to": lambda x, shape: x.broadcast_to(shape),
             },
         }
+
+    def _init_divice(self):
+        if self.backend == "torch":
+            if not TORCH_AVAILABLE:
+                raise ImportError("PyTorch is not available. Please install torch.")
+            if self.device is None:
+                self.device = torch.device(
+                    "cuda" if torch.cuda.is_available() else "cpu"
+                )
+            else:
+                self.device = torch.device(self.device)
+        else:
+            self.device = None
 
     def _torch_to_tensor(self, x: Any) -> torch.Tensor:
         if isinstance(x, torch.Tensor):
@@ -113,9 +136,9 @@ class Backend:
         return tensors
 
     def __enter__(self) -> "Backend":
-        global BACKEND
-        self.previous_backend = BACKEND
-        BACKEND = self
+        global _BACKEND
+        self.previous_backend = _BACKEND
+        _BACKEND = self
         return self
 
     def __exit__(
@@ -124,14 +147,34 @@ class Backend:
         exc_value: Optional[Exception],
         traceback: Optional[Any],
     ) -> None:
-        global BACKEND
-        BACKEND = self.previous_backend
+        global _BACKEND
+        _BACKEND = self.previous_backend
         self.previous_backend = None
 
 
-BACKEND: Backend = Backend("numpy", "cpu")
+_BACKEND: Backend = Backend("numpy")
 
 
-def set_backend(backend_name: str, device: str = "cpu") -> None:
-    global BACKEND
-    BACKEND = Backend(backend_name, device)
+def get_backend() -> "Backend":
+    """Get the current global backend instance."""
+    return _BACKEND
+
+
+def set_backend(backend_name: str, device: str = None) -> None:
+    """
+    Set the global backend for tensor operations.
+
+    Args:
+        backend_name: Name of the backend ("numpy" or "torch")
+        device: Device for computation (only relevant for torch backend)
+
+    Raises:
+        ValueError: If backend_name is not supported
+        ImportError: If torch backend is requested but not available
+
+    Note:
+        After calling this function, you should use get_backend() to access
+        the current backend, or reimport modules that use the backend.
+    """
+    global _BACKEND
+    _BACKEND = Backend(backend_name, device)

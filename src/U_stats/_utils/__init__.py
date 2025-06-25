@@ -10,7 +10,7 @@ from ._alphabet import (
     ALPHABET,
 )
 
-from ._backend import BACKEND, set_backend, Backend
+from ._backend import set_backend, Backend, get_backend
 
 __all__ = [
     "standardize_indices",
@@ -19,6 +19,6 @@ __all__ = [
     "expression_to_einsum_equation",
     "ALPHABET",
     "set_backend",
+    "get_backend",
     "Backend",
-    "BACKEND",
 ] + _typing.__all__

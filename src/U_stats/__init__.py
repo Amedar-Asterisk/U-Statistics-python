@@ -15,13 +15,13 @@ __all__ = [
     "VStatsCalculator",
     "U_stats_loop",
     "set_backend",
-    "Backend",
+    "get_backend",
     "available_methods",
 ]
 from .tensor_contraction.path import TensorExpression
 from .statistics import UStatsCalculator, VStatsCalculator, U_stats_loop
 from ._utils import Expression, PathInfo
-from ._utils import set_backend, Backend
+from ._utils import set_backend, Backend, get_backend
 from typing import List, Tuple
 import numpy as np
 
