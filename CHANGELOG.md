@@ -1,3 +1,10 @@
+## 0.4.3 (2025-06-25)
+
+### Fix
+
+- **backend-typing**: fix bug of backend; adapt import of type var for pathinfo
+- **calculator.py**: remove unused import of Callable from typing
+
 ## 0.4.2 (2025-06-24)
 
 ### Fix
