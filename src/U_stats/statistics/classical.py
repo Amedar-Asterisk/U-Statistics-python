@@ -6,22 +6,7 @@ import numpy as np
 from .._utils import get_backend
 
 
-def get_sign_backend():
-    return get_backend().sign
-
-
-def get_einsum_backend():
-    return get_backend().einsum
-
-
-def get_prod_backend():
-    return get_backend().prod
-
-
-def get_zeros_backend():
-    return get_backend().zeros
-
-
+# Removed redundant `get_*_backend` wrapper functions.
 @dataclass
 class _Expression:
 
