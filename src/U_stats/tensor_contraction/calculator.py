@@ -19,16 +19,16 @@ class TensorContractionCalculator:
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> Dict[int, np.ndarray]:
-
+        backend = get_backend()
         if isinstance(tensors, list):
             tensors = {
-                i: get_backend().to_tensor(tensor)
+                i: backend.to_tensor(tensor)
                 for i, tensor in enumerate(tensors)
                 if shape[i] > 0
             }
         elif isinstance(tensors, dict):
             tensors = {
-                i: get_backend().to_tensor(tensor)
+                i: backend.to_tensor(tensor)
                 for i, tensor in tensors.items()
                 if shape[i] > 0
             }
