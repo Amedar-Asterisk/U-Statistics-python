@@ -31,7 +31,7 @@ class Backend:
             )
 
         self.previous_backend: Optional["Backend"] = None
-
+        self._init_device(device)
         self._ops: Dict[str, Dict[str, Callable]] = {
             "numpy": {
                 "to_tensor": np.asarray,
@@ -59,11 +59,11 @@ class Backend:
             },
         }
 
-    def _init_device(self):
+    def _init_device(self, device: str) -> None:
         if self.backend == "torch":
             if not TORCH_AVAILABLE:
                 raise ImportError("PyTorch is not available. Please install torch.")
-            if self.device is None:
+            if device is None:
                 self.device = torch.device(
                     "cuda" if torch.cuda.is_available() else "cpu"
                 )
