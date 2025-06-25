@@ -1,7 +1,7 @@
 import numpy as np
 from .path import TensorExpression
 from typing import List, Dict, Tuple, Union, Hashable, Set
-from .._utils import Expression, BACKEND
+from .._utils import Expression, get_backend
 
 
 class TensorContractionCalculator:
@@ -19,16 +19,16 @@ class TensorContractionCalculator:
         tensors: List[np.ndarray] | Dict[int, np.ndarray],
         shape: Tuple[int, ...],
     ) -> Dict[int, np.ndarray]:
-
+        backend = get_backend()
         if isinstance(tensors, list):
             tensors = {
-                i: BACKEND.to_tensor(tensor)
+                i: backend.to_tensor(tensor)
                 for i, tensor in enumerate(tensors)
                 if shape[i] > 0
             }
         elif isinstance(tensors, dict):
             tensors = {
-                i: BACKEND.to_tensor(tensor)
+                i: backend.to_tensor(tensor)
                 for i, tensor in tensors.items()
                 if shape[i] > 0
             }
@@ -57,13 +57,13 @@ class TensorContractionCalculator:
         position_number = max(tensor_dict.keys()) + 1
         for positions, format in computing_path:
             tensors = [tensor_dict[i] for i in positions]
-            result = BACKEND.einsum(format, *tensors)
+            result = get_backend().einsum(format, *tensors)
             for i in positions:
                 tensor_dict.pop(i)
             tensor_dict[position_number] = result
             position_number += 1
 
-        return BACKEND.prod(list(tensor_dict.values()))
+        return get_backend().prod(list(tensor_dict.values()))
 
     def calculate(
         self,

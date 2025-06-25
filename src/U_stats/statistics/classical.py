@@ -3,15 +3,10 @@ from .U2V import get_all_partitions, partition_weight
 from typing import List, Set
 import numpy as np
 
-from .._utils import BACKEND
+from .._utils import get_backend
 
 
-sign_backend = BACKEND.sign
-einsum_backend = BACKEND.einsum
-prod_backend = BACKEND.prod
-zeros_backend = BACKEND.zeros
-
-
+# Removed redundant `get_*_backend` wrapper functions.
 @dataclass
 class _Expression:
 
@@ -133,11 +128,11 @@ def _spearman_hatrho(T: np.ndarray) -> np.ndarray:
     n, _, p = T.shape
     expr = _get_spearman_expressions()
     partitions = get_all_partitions(expr.S.contracted_indices)
-    result = zeros_backend((p, p))
+    result = get_backend().zeros((p, p))
     for partition in partitions:
         subexpr = expr.S.subexpression(partition)
         weight = partition_weight(partition)
-        result += weight * einsum_backend(subexpr.formula, T, T)
+        result += weight * get_backend().einsum(subexpr.formula, T, T)
     return result
 
 
@@ -160,12 +155,12 @@ def _spearman_tau(T: np.ndarray):
     n, _, p = T.shape
     expr = _get_spearman_expressions()
     partitions = get_all_partitions(expr.K.contracted_indices)
-    result = zeros_backend((p, p))
+    result = get_backend().zeros((p, p))
     for partition in partitions:
         subexpr = expr.K.subexpression(partition)
         weight = partition_weight(partition)
-        result += weight * einsum_backend(subexpr.formula, T, T)
-    result = result / prod_backend(range(n, n - 2, -1))
+        result += weight * get_backend().einsum(subexpr.formula, T, T)
+    result = result / get_backend().prod(range(n, n - 2, -1))
     return result
 
 
@@ -189,7 +184,7 @@ def spearman_rho(X: np.ndarray) -> np.ndarray:
     T = _spearman_kernel(X)
     hatrho = _spearman_hatrho(T)
     tau = _spearman_tau(T)
-    return 3 * (hatrho + tau) / prod_backend(range(n, n - 3, -1))
+    return 3 * (hatrho + tau) / get_backend().prod(range(n, n - 3, -1))
 
 
 # -----------Bergsma-Dassios t* statistics----------------
@@ -285,18 +280,18 @@ def bergsma_dassios_t(X: np.ndarray) -> np.ndarray:
     T = _bergsma_dassios_kernel(X)
     tensors = [T] * 8
     n, _, p = T.shape
-    result = zeros_backend((p, p))
+    result = get_backend().zeros((p, p))
     partitions = get_all_partitions(contracted_indices)
 
     for expr, sign in zip(exprs, signs):
-        t_result = zeros_backend((p, p))
+        t_result = get_backend().zeros((p, p))
         for partition in partitions:
             subexpr = expr.subexpression(partition)
             weight = partition_weight(partition)
-            t_result += weight * einsum_backend(subexpr.formula, *tensors)
+            t_result += weight * get_backend().einsum(subexpr.formula, *tensors)
         result = sign * t_result
 
-    result = result / prod_backend(range(n, n - 4, -1))
+    result = result / get_backend().prod(range(n, n - 4, -1))
     return result
 
 
@@ -392,16 +387,16 @@ def hoeffding_d(X: np.ndarray) -> np.ndarray:
     T = _hoeffding_d_kernel(X)
     tensors = [T] * 8
     n, _, p = T.shape
-    result = zeros_backend((p, p))
+    result = get_backend().zeros((p, p))
 
     for expr, sign in zip(exprs, signs):
-        t_result = zeros_backend((p, p))
+        t_result = get_backend().zeros((p, p))
         partitions = get_all_partitions(expr.contracted_indices)
         for partition in partitions:
             subexpr = expr.subexpression(partition)
             weight = partition_weight(partition)
-            t_result += weight * einsum_backend(subexpr.formula, *tensors)
+            t_result += weight * get_backend().einsum(subexpr.formula, *tensors)
         result = sign * t_result
 
-    result = result / prod_backend(range(n, n - 5, -1))
+    result = result / get_backend().prod(range(n, n - 5, -1))
     return result

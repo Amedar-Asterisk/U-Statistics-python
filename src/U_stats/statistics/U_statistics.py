@@ -3,7 +3,7 @@ from ..tensor_contraction.calculator import TensorContractionCalculator
 from typing import List, Hashable, Generator, Tuple, Dict, Set
 from functools import cached_property
 from .U2V import get_all_partitions, partition_weight, get_all_partitions_nonconnected
-from .._utils import Expression, standardize_indices, BACKEND
+from .._utils import Expression, standardize_indices, get_backend
 import numpy as np
 import itertools
 
@@ -98,7 +98,9 @@ class UStatsCalculator(TensorContractionCalculator):
             )
         if average:
             n_samples = tensors[0].shape[0]
-            return result / BACKEND.prod(range(n_samples, n_samples - self.order, -1))
+            return result / get_backend().prod(
+                range(n_samples, n_samples - self.order, -1)
+            )
         return result
 
     def caculate_non_diag(
@@ -119,7 +121,7 @@ class UStatsCalculator(TensorContractionCalculator):
         tensors = self._initalize_tensor_dict(tensors, self.shape)
         self._validate_inputs(tensors, self.shape)
         n_samples = tensors[0].shape[0]
-        tensors = BACKEND.dediag_tensors(tensors, n_samples)
+        tensors = get_backend().dediag_tensors(tensors, n_samples)
 
         result = 0
         subexpressions = self.expression.non_diag_subexpressions()
@@ -129,7 +131,9 @@ class UStatsCalculator(TensorContractionCalculator):
                 self, tensors.copy(), computing_path=path
             )
         if average:
-            return result / BACKEND.prod(range(n_samples, n_samples - self.order, -1))
+            return result / get_backend().prod(
+                range(n_samples, n_samples - self.order, -1)
+            )
         return result
 
 
