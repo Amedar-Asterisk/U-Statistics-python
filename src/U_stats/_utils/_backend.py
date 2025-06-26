@@ -68,7 +68,7 @@ class Backend:
                     "cuda" if torch.cuda.is_available() else "cpu"
                 )
             else:
-                self.device = torch.device(self.device)
+                self.device = torch.device(device)
         else:
             self.device = None
 
