@@ -137,6 +137,68 @@ class UStatsCalculator(TensorContractionCalculator):
         return result
 
 
+    def caculate_non_diag_einsum(
+        self,
+        tensors: List[np.ndarray],
+        average=True,
+        path_method="double-greedy-degree-then-fill",
+    ) -> float:
+        """Calculate the U statistics of a list of kernel tensors
+        with particular expression.
+
+        Args:
+            tensors: List[np.ndarray], a list of kernel matrices
+
+        Returns:
+            float, the U statistics of the kernel matrices
+        """
+        tensors = self._initalize_tensor_dict(tensors, self.shape)
+        self._validate_inputs(tensors, self.shape)
+        n_samples = tensors[0].shape[0]
+        tensors = get_backend().dediag_tensors(tensors, n_samples)
+
+        result = 0
+        subexpressions = self.expression.non_diag_subexpressions()
+        for weight, subexpression in subexpressions:
+            result += weight * TensorContractionCalculator._tensor_contract_einsum(
+                self, tensors.copy(), expression=subexpression
+            )
+        if average:
+            return result / get_backend().prod(
+                range(n_samples, n_samples - self.order, -1)
+            )
+        return result
+
+    def caculate_einsum(
+        self,
+        tensors: List[np.ndarray],
+        average=True,
+        path_method="double-greedy-degree-then-fill",
+    ) -> float:
+        """Calculate the U statistics of a list of kernel tensors
+        with particular expression.
+
+        Args:
+            tensors: List[np.ndarray], a list of kernel matrices
+
+        Returns:
+            float, the U statistics of the kernel matrices
+        """
+        tensors = self._initalize_tensor_dict(tensors, self.shape)
+        self._validate_inputs(tensors, self.shape)
+        result = 0
+        n_samples = tensors[0].shape[0]
+        subexpressions = self.expression.subexpressions()
+        for weight, subexpression in subexpressions:
+            result += weight * TensorContractionCalculator._tensor_contract_einsum(
+                self, tensors.copy(), expression=subexpression
+            )
+        if average:
+            return result / get_backend().prod(
+                range(n_samples, n_samples - self.order, -1)
+            )
+        return result
+    
 def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> float:
     nt = len(tensors)
     ns = tensors[0].shape[0]

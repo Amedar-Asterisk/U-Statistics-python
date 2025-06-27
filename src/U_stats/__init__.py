@@ -43,16 +43,24 @@ def ustat(
     average: bool = True,
     path_method: str = "double-greedy-degree-then-fill",
     _dediag: bool = True,
+    _einsum: bool = True
 ) -> float:
-    return (
-        UStatsCalculator(expression=expression).caculate_non_diag(
+    if _einsum and _dediag:
+        return UStatsCalculator(expression=expression).caculate_non_diag_einsum(
+            tensors=tensors, average=average,  path_method=path_method
+        )
+    elif not _einsum and _dediag:
+        return UStatsCalculator(expression=expression).caculate_non_diag(
             tensors=tensors, average=average, path_method=path_method
         )
-        if _dediag
-        else UStatsCalculator(expression=expression).calculate(
+    elif _einsum and not _dediag:
+        return UStatsCalculator(expression=expression).caculate_einsum(
             tensors=tensors, average=average, path_method=path_method
         )
-    )
+    else:
+        return UStatsCalculator(expression=expression).calculate(
+            tensors=tensors, average=average, path_method=path_method
+        )
 
 
 def analyze_expression(
