@@ -628,7 +628,7 @@ class TensorExpression:
         optimize: Optional[str] = False,
     ) -> PathInfo:
         path_info = PathInfo()
-        path_info.input_subscripts = self.eq
+        path_info.input_subscripts = self.expression
         path_info.output_subscript = ""
         path_info.indices = numbers_to_letters(self.indices)[0]
         path_info.size_dict = {index: size for index in path_info.indices}
