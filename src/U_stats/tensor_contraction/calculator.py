@@ -95,7 +95,8 @@ class TensorContractionCalculator:
         Args:
             tensor_dict: Dictionary mapping tensor indices to tensors
             computing_path: List of contraction steps (used when use_einsum=False)
-            expression: TensorExpression containing the contraction pattern (used when use_einsum=True)
+            expression: TensorExpression containing the contraction pattern
+            (used when use_einsum=True)
             use_einsum: bool, whether to use direct einsum method
 
         Returns:
@@ -109,15 +110,10 @@ class TensorContractionCalculator:
                 )
 
             backend = get_backend()
-
             einsum_string = self._build_einsum_string(expression)
-
-
             sorted_indices = sorted(tensor_dict.keys())
             tensors = [tensor_dict[i] for i in sorted_indices]
-
             result = backend.einsum(einsum_string, *tensors)
-
 
             if hasattr(result, "item") and result.ndim == 0:
                 return result.item()
