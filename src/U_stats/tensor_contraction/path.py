@@ -620,7 +620,7 @@ class TensorExpression:
                 pair_dict.pop(position)
         return computing_path
 
-    def path(self, method: str = "2-greedy") -> Tuple[Path, int]:
+    def path(self, method: str = "double-greedy-degree-then-fill") -> Tuple[Path, int]:
         if method not in self._METHOD_:
             raise ValueError(
                 f"Invalid method: {method}. "

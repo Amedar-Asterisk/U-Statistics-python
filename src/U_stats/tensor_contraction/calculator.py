@@ -51,38 +51,6 @@ class TensorContractionCalculator:
             if tensor.shape[0] != n_samples:
                 raise ValueError("The number of samples in tensors do not match.")
 
-    def _tensor_contract(
-        self, tensor_dict: Dict[int, np.ndarray], computing_path: List[Tuple[Set, str]]
-    ) -> float:
-        position_number = max(tensor_dict.keys()) + 1
-        for positions, format in computing_path:
-            tensors = [tensor_dict[i] for i in positions]
-            result = get_backend().einsum(format, *tensors)
-            for i in positions:
-                tensor_dict.pop(i)
-            tensor_dict[position_number] = result
-            position_number += 1
-
-        return get_backend().prod(list(tensor_dict.values()))
-    
-    def calculate(
-        self,
-        tensors: List[np.ndarray] | Dict[int, np.ndarray],
-        expression: Expression | TensorExpression,
-        path_method: str = "greedy",
-        _validate: bool = True,
-        _init_expression=True,
-        _init_tensor=True,
-    ) -> float:
-        if _init_expression:
-            expression = self._initalize_expression(expression)
-        if _init_tensor:
-            tensors = self._initalize_tensor_dict(tensors, expression.shape)
-        if _validate:
-            self._validate_inputs(tensors, expression.shape)
-        path, _ = expression.path(path_method)
-        return self._tensor_contract(tensors, path)
-
 
 
     def _build_einsum_string(self, expression: TensorExpression) -> str:
@@ -122,50 +90,92 @@ class TensorContractionCalculator:
             for idx in tensor_idx_list:
                 index_count[idx] = index_count.get(idx, 0) + 1
         
-        # Free indices (appear odd number of times, typically 1)
-        # But for tensor contraction, we usually want to contract everything to a scalar
-        free_indices = [idx for idx, count in index_count.items() if count % 2 == 1]
-        
-        # For tensor contraction problems, we typically want to contract all indices
-        # So we force the output to be empty (scalar result)
-        output_part = ''
-        
+
         # Always create a scalar contraction
         einsum_string = ','.join(input_parts) + '->'
         
         return einsum_string
 
-    def _tensor_contract_einsum(
+    def _tensor_contract(
         self, 
         tensor_dict: Dict[int, np.ndarray], 
-        expression: TensorExpression
+        computing_path: List[Tuple[Set, str]] = None,
+        expression: TensorExpression = None,
+        _einsum: bool = False
     ) -> float:
         """
-        Direct tensor contraction using backend einsum with full expression.
+        Tensor contraction with two modes: path-based or direct einsum.
         
         Args:
             tensor_dict: Dictionary mapping tensor indices to tensors
-            expression: TensorExpression containing the contraction pattern
+            computing_path: List of contraction steps (used when _einsum=False)
+            expression: TensorExpression containing the contraction pattern (used when _einsum=True)
+            _einsum: bool, whether to use direct einsum method
             
         Returns:
             float: Result of the tensor contraction
         """
-        backend = get_backend()
-        
-        # Build the einsum string from the expression
-        einsum_string = self._build_einsum_string(expression)
-        
-        # Sort tensors by their indices to match the einsum string order
-        sorted_indices = sorted(tensor_dict.keys())
-        tensors = [tensor_dict[i] for i in sorted_indices]
-        
-        # Perform the full contraction in one einsum operation
-        result = backend.einsum(einsum_string, *tensors)
-        
-        # If result is a scalar tensor, convert to scalar
-        if hasattr(result, 'item') and result.ndim == 0:
-            return result.item()
-        elif hasattr(result, 'shape') and len(result.shape) == 0:
-            return float(result)
+        if _einsum:
+            # Direct tensor contraction using backend einsum with full expression
+            if expression is None:
+                raise ValueError("expression parameter is required when _einsum=True")
+                
+            backend = get_backend()
+            
+            # Build the einsum string from the expression
+            einsum_string = self._build_einsum_string(expression)
+            
+            # Sort tensors by their indices to match the einsum string order
+            sorted_indices = sorted(tensor_dict.keys())
+            tensors = [tensor_dict[i] for i in sorted_indices]
+            
+            # Perform the full contraction in one einsum operation
+            result = backend.einsum(einsum_string, *tensors)
+            
+            # If result is a scalar tensor, convert to scalar
+            if hasattr(result, 'item') and result.ndim == 0:
+                return result.item()
+            elif hasattr(result, 'shape') and len(result.shape) == 0:
+                return float(result)
+            else:
+                return result
         else:
-            return result
+            # Path-based tensor contraction
+            if computing_path is None:
+                raise ValueError("computing_path parameter is required when _einsum=False")
+                
+            position_number = max(tensor_dict.keys()) + 1
+            for positions, format in computing_path:
+                tensors = [tensor_dict[i] for i in positions]
+                result = get_backend().einsum(format, *tensors)
+                for i in positions:
+                    tensor_dict.pop(i)
+                tensor_dict[position_number] = result
+                position_number += 1
+
+            return get_backend().prod(list(tensor_dict.values()))
+
+
+    def calculate(
+        self,
+        tensors: List[np.ndarray] | Dict[int, np.ndarray],
+        expression: Expression | TensorExpression,
+        path_method: str = "greedy",
+        _validate: bool = True,
+        _init_expression=True,
+        _init_tensor=True,
+        _einsum: bool = False,
+    ) -> float:
+        if _init_expression:
+            expression = self._initalize_expression(expression)
+        if _init_tensor:
+            tensors = self._initalize_tensor_dict(tensors, expression.shape)
+        if _validate:
+            self._validate_inputs(tensors, expression.shape)
+        if _einsum:
+            return self._tensor_contract(tensors, expression=expression, _einsum=True)
+        else:
+            path, _ = expression.path(path_method)
+            return self._tensor_contract(
+                tensors, computing_path=path, expression=expression, _einsum=False
+            )
