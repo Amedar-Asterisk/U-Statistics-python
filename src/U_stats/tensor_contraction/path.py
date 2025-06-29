@@ -68,6 +68,8 @@ class TensorExpression:
     __size: int = 10**4
 
     def __init__(self, expression: Optional[Expression] = None) -> None:
+        if expression is None:
+            raise ValueError("The 'expression' parameter must not be None.")
         expression = standardize_indices(expression=expression)
         self._expression = [item for item in expression if len(item) > 0]
         self.shape = tuple(len(pair) for pair in expression)
