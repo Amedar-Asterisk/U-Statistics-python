@@ -178,15 +178,79 @@ def test_different_orders(methods, orders, sizes):
             print(f"   Continuing with next order...")
         
 if __name__ == "__main__":
-
-    methods = [
-        # {'name': 'For loop', 'einsum': True, 'dediag': False},
-        {'name': 'Path + No Dediag', 'einsum': False, 'dediag': False},
-        {'name': 'Path + Dediag', 'einsum': False, 'dediag': True},
-        {'name': 'Einsum + Dediag', 'einsum': True, 'dediag': True},
-        {'name': 'Einsum + No Dediag', 'einsum': True, 'dediag': False},
-    ]
+    import os
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+    # methods = [
+    #     # {'name': 'For loop', 'einsum': True, 'dediag': False},
+    #     {'name': 'Path + No Dediag', 'einsum': False, 'dediag': False},
+    #     {'name': 'Path + Dediag', 'einsum': False, 'dediag': True},
+    #     {'name': 'Einsum + Dediag', 'einsum': True, 'dediag': True},
+    #     {'name': 'Einsum + No Dediag', 'einsum': True, 'dediag': False},
+    # ]
     set_backend("torch", "cpu") 
-    sizes = [1000]
-    orders = [7]
-    test_different_orders(methods = methods, orders=orders, sizes=sizes)
+    # sizes = [1000]
+    # orders = [7]
+    # test_different_orders(methods = methods, orders=orders, sizes=sizes)
+    
+
+mode_1 = [[0, 1], [1, 1], [1, 1], [1, 4], [4, 0], [0, 6]]
+sizes = [ 2000, 4000, 8000]
+
+for n in sizes:
+    print(f"\n===== n = {n} =====")
+
+    # Torch tensors
+    tensors_torch = [torch.randn(n, n) for _ in range(6)]
+    t0 = time.time()
+    result_einsum_torch = vstat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=True)
+    t1 = time.time()
+    print(f"Torch einsum time: {t1-t0:.4f} s")
+
+    t0 = time.time()
+    result_path_torch = vstat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=False)
+    t1 = time.time()
+    print(f"Torch path time: {t1-t0:.4f} s")
+
+    # Numpy arrays
+    tensors_np = [np.random.randn(n, n) for _ in range(6)]
+    t0 = time.time()
+    result_einsum_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=True)
+    t1 = time.time()
+    print(f"Numpy einsum time: {t1-t0:.4f} s")
+
+    t0 = time.time()
+    result_path_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=False)
+    t1 = time.time()
+    print(f"Numpy path time: {t1-t0:.4f} s")
+
+    # 结果一致性
+    print("Torch results match:", abs(result_einsum_torch - result_path_torch) / abs(result_einsum_torch))
+    print("Numpy results match:", abs(result_einsum_np - result_path_np) / abs(result_einsum_np))
+    
+    # expr = 'ab,bb,bb,bc->ac'
+    # sizes = [50, 100, 200, 400, 800, 1600]
+
+    # for n in sizes:
+    #     print(f"\n===== n = {n} =====")
+    #     a1 = np.random.rand(n, n)
+    #     a2 = np.random.rand(n, n)
+    #     a3 = np.random.rand(n, n)
+    #     a4 = np.random.rand(n, n)
+    #     a5 = np.random.rand(n, n)
+    #     a6 = np.random.rand(n, n)
+    #     operands = [a1, a2, a3, a4]
+
+    #     # 默认顺序
+    #     t0 = time.time()
+    #     res_default = np.einsum(expr, *operands)
+    #     t1 = time.time()
+    #     print(f"Default path time: {t1-t0:.4f} s")
+
+    #     # 优化路径
+    #     t0 = time.time()
+    #     res_opt = np.einsum(expr, *operands, optimize='optimal')
+    #     t1 = time.time()
+    #     print(f"Optimal path time: {t1-t0:.4f} s")
+
+    #     # 检查结果一致性
+    #     print("Results match:", np.allclose(res_default, res_opt))

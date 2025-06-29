@@ -1,7 +1,7 @@
 import itertools
 from typing import Dict, Union, Any, Callable, Optional, List, Tuple, TypeVar
 import numpy as np
-
+import opt_einsum as oe
 try:
     import torch
 
@@ -37,7 +37,7 @@ class Backend:
                 "to_tensor": np.asarray,
                 "zeros": np.zeros,
                 "sign": np.sign,
-                "einsum": np.einsum,
+                "einsum": lambda eq, *ops: oe.contract(eq, *ops, optimize='optimal'),
                 "prod": np.prod,
                 "arange": np.arange,
                 "ndim": lambda x: x.ndim,
@@ -49,9 +49,7 @@ class Backend:
                     shape, dtype=dtype, device=self.device
                 ),
                 "sign": lambda x: torch.sign(self.to_tensor(x)),
-                "einsum": lambda eq, *ops: torch.einsum(
-                    eq, *[self.to_tensor(op) for op in ops]
-                ),
+                "einsum": lambda eq, *ops: oe.contract(eq, *[self.to_tensor(op) for op in ops], optimize='optimal'),
                 "prod": lambda x: torch.prod(self.to_tensor(x).float()),
                 "arange": lambda dim: torch.arange(dim, device=self.device),
                 "ndim": lambda x: x.dim(),
