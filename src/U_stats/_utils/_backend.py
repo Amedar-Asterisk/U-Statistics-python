@@ -9,13 +9,15 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
 
+import opt_einsum as oe
+
 TensorType = TypeVar("TensorType", np.ndarray, "torch.Tensor")
 ShapeType = Union[Tuple[int, ...], List[int]]
 DType = Union[np.dtype, torch.dtype, None]
 
 
 class Backend:
-    def __init__(self, backend: str = "numpy", device: str = None) -> None:
+    def __init__(self, backend: str = "numpy") -> None:
         self.backend: str = backend.lower()
 
         if self.backend not in ["numpy", "torch"]:
@@ -31,13 +33,15 @@ class Backend:
             )
 
         self.previous_backend: Optional["Backend"] = None
-        self._init_device(device)
+        self._init_device()
         self._ops: Dict[str, Dict[str, Callable]] = {
             "numpy": {
                 "to_tensor": np.asarray,
                 "zeros": np.zeros,
                 "sign": np.sign,
-                "einsum": lambda eq, *ops: oe.contract(eq, *ops, optimize='optimal'),
+                "einsum": lambda eq, *ops: oe.contract(
+                    eq, *ops, backend="numpy", optimize="greedy"
+                ),
                 "prod": np.prod,
                 "arange": np.arange,
                 "ndim": lambda x: x.ndim,
@@ -49,7 +53,9 @@ class Backend:
                     shape, dtype=dtype, device=self.device
                 ),
                 "sign": lambda x: torch.sign(self.to_tensor(x)),
-                "einsum": lambda eq, *ops: oe.contract(eq, *[self.to_tensor(op) for op in ops], optimize='optimal'),
+                "einsum": lambda eq, *ops: oe.contract(
+                    eq, *ops, backend="torch", optimize="greedy"
+                ),
                 "prod": lambda x: torch.prod(self.to_tensor(x).float()),
                 "arange": lambda dim: torch.arange(dim, device=self.device),
                 "ndim": lambda x: x.dim(),
@@ -57,16 +63,11 @@ class Backend:
             },
         }
 
-    def _init_device(self, device: str) -> None:
+    def _init_device(self) -> None:
         if self.backend == "torch":
             if not TORCH_AVAILABLE:
                 raise ImportError("PyTorch is not available. Please install torch.")
-            if device is None:
-                self.device = torch.device(
-                    "cuda" if torch.cuda.is_available() else "cpu"
-                )
-            else:
-                self.device = torch.device(device)
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             self.device = None
 

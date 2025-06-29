@@ -22,24 +22,23 @@ class UExpression(TensorExpression):
     def order(self) -> int:
         return len(self.indices)
 
-    def subexpression(self, partition: List[set]) -> Tuple[float, "UExpression"]:
-        new_expression = self.copy()
+    def subexpression(self, partition: List[set]) -> Tuple[float, TensorExpression]:
         mapping = {}
         weight = partition_weight(partition)
-
+        expression = self.expression
         for s in partition:
             representative = min(s)
             for element in s:
                 if element != representative:
                     mapping[element] = representative
-        for pos in new_expression._pair_dict:
-            pair = new_expression[pos]
+        new_expression = []
+        for pair in expression:
             new_pair = [mapping.get(index, index) for index in pair]
-            new_expression._pair_dict[pos] = new_pair
-
-        for orig, rep in mapping.items():
-            new_expression._index_table.merge(orig, rep)
-        return weight, new_expression
+            new_expression.append(new_pair)
+        return (
+            weight,
+            TensorExpression(new_expression),
+        )
 
     @cached_property
     def _adj_list(self) -> Dict[Hashable, Set[Hashable]]:
@@ -76,58 +75,51 @@ class UStatsCalculator(TensorContractionCalculator):
         self.shape = self.expression.shape
    
     def calculate(
-        self, tensors: List[np.ndarray], average=True, path_method="double-greedy-degree-then-fill", _dediag=True, _einsum=False
+        self,
+        tensors: List[np.ndarray],
+        average=True,
+        path_method="greedy-fill-in",
+        dediag: bool = True,
+        use_einsum: bool = False,
     ) -> float:
         """Calculate the U statistics of a list of kernel matrices(tensors)
         with particular expression.
 
         Args:
             tensors: List[np.ndarray], a list of kernel matrices
-            average: bool, whether to average the result
-            path_method: str, path optimization method
-            _dediag: bool, whether to use non-diagonal calculation
-            _einsum: bool, whether to use direct einsum for tensor contraction
 
         Returns:
             float, the U statistics of the kernel matrices
         """
         tensors = self._initalize_tensor_dict(tensors, self.shape)
         self._validate_inputs(tensors, self.shape)
-        n_samples = tensors[0].shape[0]
-        
-        # Apply dediagonalization if needed
-        if _dediag:
-            tensors = get_backend().dediag_tensors(tensors, n_samples)
-        
         result = 0
-        
-        # Choose subexpressions based on _dediag flag
-        if _dediag:
+        if dediag:
+            n_samples = tensors[0].shape[0]
+            tensors = get_backend().dediag_tensors(tensors, n_samples)
             subexpressions = self.expression.non_diag_subexpressions()
         else:
             subexpressions = self.expression.subexpressions()
-        
-        # Calculate result based on _einsum flag
+
+        if use_einsum:
+            tensors = [tensors[i] for i in range(len(tensors))]
+
         for weight, subexpression in subexpressions:
-            if _einsum:
-                # Use einsum method
-                result += weight * TensorContractionCalculator._tensor_contract(
-                    self, tensors.copy(), expression=subexpression, _einsum=True
-                )
+            if use_einsum:
+                result += weight * get_backend().einsum(str(subexpression), *tensors)
             else:
-                # Use path-based method
                 path, _ = subexpression.path(path_method)
                 result += weight * TensorContractionCalculator._tensor_contract(
-                    self, tensors.copy(), computing_path=path, _einsum=False
+                    self, tensors.copy(), path
                 )
-        
-        # Apply averaging if needed
         if average:
+            n_samples = tensors[0].shape[0]
             return result / get_backend().prod(
                 range(n_samples, n_samples - self.order, -1)
             )
         return result
-    
+
+
 def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> float:
     nt = len(tensors)
     ns = tensors[0].shape[0]
