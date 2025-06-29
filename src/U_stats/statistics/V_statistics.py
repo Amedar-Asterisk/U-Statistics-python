@@ -3,6 +3,7 @@ from ..tensor_contraction.path import TensorExpression
 from .._utils import Expression
 from typing import List
 import numpy as np
+from .._utils import get_backend
 
 __all__ = ["VStatsCalculator"]
 
@@ -37,8 +38,11 @@ class VStatsCalculator(TensorContractionCalculator):
         self,
         tensors: List[np.ndarray],
         average=True,
-        path_method: str = "greedy",
+        path_method: str = "greedy-fill-in",
+        use_einsum: bool = False,
     ) -> float:
+        if use_einsum:
+            return get_backend().einsum(str(self.expression), *tensors)
         n_samples = tensors[0].shape[0]
         tensors = TensorContractionCalculator._initalize_tensor_dict(
             self, tensors, self.shape

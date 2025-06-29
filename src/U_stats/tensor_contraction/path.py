@@ -68,40 +68,30 @@ class TensorExpression:
     __size: int = 10**4
 
     def __init__(self, expression: Optional[Expression] = None) -> None:
-        if expression is not None:
-            expression = standardize_indices(expression=expression)
-            expression = [item for item in expression if len(item) > 0]
-            self.eq = expression_to_einsum_equation(numbers_to_letters(expression)[0])
-            self.shape = tuple(len(pair) for pair in expression)
-            pair_dict = dict.fromkeys(range(len(expression)), None)
-            for i, pair in enumerate(expression):
-                pair_dict[i] = pair
-            self._pair_dict = pair_dict
-            self._index_table: "_IndexRegistry" = _IndexRegistry()
-            for i, pair in self._pair_dict.items():
-                for index in pair:
-                    self._index_table.append(index, i)
-            self._position_list = list(range(len(self.shape)))
-
-        else:
-            self._pair_dict = {}
-            self._index_table: "_IndexRegistry" = _IndexRegistry()
-            self.shape = None
-            self._position_list = []
-
-    def copy(self) -> "TensorExpression":
-        new_state = TensorExpression(None)
-        new_state._pair_dict = deepcopy(self._pair_dict)
-        new_state._index_table = self._index_table.copy()
-        new_state.shape = self.shape
-        new_state._position_list = self._position_list.copy()
-        return new_state
+        if expression is None:
+            raise ValueError("The 'expression' parameter must not be None.")
+        expression = standardize_indices(expression=expression)
+        self._expression = [item for item in expression if len(item) > 0]
+        self.shape = tuple(len(pair) for pair in expression)
+        pair_dict = dict.fromkeys(range(len(expression)), None)
+        for i, pair in enumerate(expression):
+            pair_dict[i] = pair
+        self._pair_dict = pair_dict
+        self._index_table: "_IndexRegistry" = _IndexRegistry()
+        for i, pair in self._pair_dict.items():
+            for index in pair:
+                self._index_table.append(index, i)
+        self._position_list = list(range(len(self.shape)))
 
     def __str__(self) -> str:
-        return self.eq
+        return expression_to_einsum_equation(numbers_to_letters(self.expression))
 
     def __getitem__(self, index: int) -> List[int]:
         return self._pair_dict[index]
+
+    @property
+    def expression(self) -> Expression:
+        return self._expression.copy()
 
     @cached_property
     def indices(self) -> List[int]:
@@ -210,7 +200,7 @@ class TensorExpression:
                 path.pop()
                 adj_matrix = old_matrix
 
-        best_path, min_cost = self.greedy_search()
+        best_path, min_cost = self.greedy_fill_in_search()
         initial_indices = list(self.indices)
         initial_matrix = self._adj_matrix.copy()
         initial_mapping = self._construct_index_mapping(initial_indices)
@@ -620,7 +610,7 @@ class TensorExpression:
                 pair_dict.pop(position)
         return computing_path
 
-    def path(self, method: str = "2-greedy") -> Tuple[Path, int]:
+    def path(self, method: str = "greedy-fill-in") -> Tuple[Path, int]:
         if method not in self._METHOD_:
             raise ValueError(
                 f"Invalid method: {method}. "
@@ -638,7 +628,7 @@ class TensorExpression:
         optimize: Optional[str] = False,
     ) -> PathInfo:
         path_info = PathInfo()
-        path_info.input_subscripts = self.eq
+        path_info.input_subscripts = self.expression
         path_info.output_subscript = ""
         path_info.indices = numbers_to_letters(self.indices)[0]
         path_info.size_dict = {index: size for index in path_info.indices}

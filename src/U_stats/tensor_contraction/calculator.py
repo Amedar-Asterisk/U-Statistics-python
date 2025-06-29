@@ -73,9 +73,12 @@ class TensorContractionCalculator:
         _validate: bool = True,
         _init_expression=True,
         _init_tensor=True,
+        _use_einsum: bool = False,
     ) -> float:
         if _init_expression:
             expression = self._initalize_expression(expression)
+        if _use_einsum:
+            return get_backend().einsum(str(expression), *tensors)
         if _init_tensor:
             tensors = self._initalize_tensor_dict(tensors, expression.shape)
         if _validate:

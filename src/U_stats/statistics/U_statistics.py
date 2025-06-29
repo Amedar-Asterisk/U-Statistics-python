@@ -22,24 +22,23 @@ class UExpression(TensorExpression):
     def order(self) -> int:
         return len(self.indices)
 
-    def subexpression(self, partition: List[set]) -> Tuple[float, "UExpression"]:
-        new_expression = self.copy()
+    def subexpression(self, partition: List[set]) -> Tuple[float, TensorExpression]:
         mapping = {}
         weight = partition_weight(partition)
-
+        expression = self.expression
         for s in partition:
             representative = min(s)
             for element in s:
                 if element != representative:
                     mapping[element] = representative
-        for pos in new_expression._pair_dict:
-            pair = new_expression[pos]
+        new_expression = []
+        for pair in expression:
             new_pair = [mapping.get(index, index) for index in pair]
-            new_expression._pair_dict[pos] = new_pair
-
-        for orig, rep in mapping.items():
-            new_expression._index_table.merge(orig, rep)
-        return weight, new_expression
+            new_expression.append(new_pair)
+        return (
+            weight,
+            TensorExpression(new_expression),
+        )
 
     @cached_property
     def _adj_list(self) -> Dict[Hashable, Set[Hashable]]:
@@ -76,7 +75,12 @@ class UStatsCalculator(TensorContractionCalculator):
         self.shape = self.expression.shape
 
     def calculate(
-        self, tensors: List[np.ndarray], average=True, path_method="greedy"
+        self,
+        tensors: List[np.ndarray],
+        average=True,
+        path_method="greedy-fill-in",
+        dediag: bool = True,
+        use_einsum: bool = False,
     ) -> float:
         """Calculate the U statistics of a list of kernel matrices(tensors)
         with particular expression.
@@ -90,47 +94,26 @@ class UStatsCalculator(TensorContractionCalculator):
         tensors = self._initalize_tensor_dict(tensors, self.shape)
         self._validate_inputs(tensors, self.shape)
         result = 0
-        subexpressions = self.expression.subexpressions()
+        if dediag:
+            n_samples = tensors[0].shape[0]
+            tensors = get_backend().dediag_tensors(tensors, n_samples)
+            subexpressions = self.expression.non_diag_subexpressions()
+        else:
+            subexpressions = self.expression.subexpressions()
+
+        if use_einsum:
+            tensors = [tensors[i] for i in range(len(tensors))]
+
         for weight, subexpression in subexpressions:
-            path, _ = subexpression.path(path_method)
-            result += weight * TensorContractionCalculator._tensor_contract(
-                self, tensors.copy(), path
-            )
+            if use_einsum:
+                result += weight * get_backend().einsum(str(subexpression), *tensors)
+            else:
+                path, _ = subexpression.path(path_method)
+                result += weight * TensorContractionCalculator._tensor_contract(
+                    self, tensors.copy(), path
+                )
         if average:
             n_samples = tensors[0].shape[0]
-            return result / get_backend().prod(
-                range(n_samples, n_samples - self.order, -1)
-            )
-        return result
-
-    def caculate_non_diag(
-        self,
-        tensors: List[np.ndarray],
-        average=True,
-        path_method="double-greedy-degree-then-fill",
-    ) -> float:
-        """Calculate the U statistics of a list of kernel tensors
-        with particular expression.
-
-        Args:
-            tensors: List[np.ndarray], a list of kernel matrices
-
-        Returns:
-            float, the U statistics of the kernel matrices
-        """
-        tensors = self._initalize_tensor_dict(tensors, self.shape)
-        self._validate_inputs(tensors, self.shape)
-        n_samples = tensors[0].shape[0]
-        tensors = get_backend().dediag_tensors(tensors, n_samples)
-
-        result = 0
-        subexpressions = self.expression.non_diag_subexpressions()
-        for weight, subexpression in subexpressions:
-            path, _ = subexpression.path(path_method)
-            result += weight * TensorContractionCalculator._tensor_contract(
-                self, tensors.copy(), computing_path=path
-            )
-        if average:
             return result / get_backend().prod(
                 range(n_samples, n_samples - self.order, -1)
             )
