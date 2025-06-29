@@ -38,22 +38,20 @@ class VStatsCalculator(TensorContractionCalculator):
         self,
         tensors: List[np.ndarray],
         average=True,
-        path_method: str = "greedy-fill-in",
+        path_method: str = "double-greedy-degree-then-fill",
         use_einsum: bool = False,
     ) -> float:
-        if use_einsum:
-            return get_backend().einsum(str(self.expression), *tensors)
         n_samples = tensors[0].shape[0]
         tensors = TensorContractionCalculator._initalize_tensor_dict(
             self, tensors, self.shape
         )
         TensorContractionCalculator._validate_inputs(self, tensors, self.shape)       
-        if _einsum:
-            result = self._tensor_contract(tensors, expression=self.expression, _einsum=True)
+        if use_einsum:
+            result = self._tensor_contract(tensors, expression=self.expression, use_einsum=True)
         else:
             path = self.expression.path(path_method)
             result = self._tensor_contract(
-                tensors, computing_path=path, expression=self.expression, _einsum=False)         
+                tensors, computing_path=path, expression=self.expression, use_einsum=False)         
             
         if average:
             return result / (n_samples**self.order)

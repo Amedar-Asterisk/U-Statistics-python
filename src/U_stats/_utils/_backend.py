@@ -9,7 +9,6 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
 
-import opt_einsum as oe
 
 TensorType = TypeVar("TensorType", np.ndarray, "torch.Tensor")
 ShapeType = Union[Tuple[int, ...], List[int]]
@@ -17,8 +16,9 @@ DType = Union[np.dtype, torch.dtype, None]
 
 
 class Backend:
-    def __init__(self, backend: str = "numpy") -> None:
+    def __init__(self, backend: str = "numpy", device: str = None) -> None:
         self.backend: str = backend.lower()
+        self.device_str = device 
 
         if self.backend not in ["numpy", "torch"]:
             raise ValueError(

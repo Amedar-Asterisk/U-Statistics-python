@@ -31,10 +31,10 @@ def vstat(
     expression: Expression,
     average: bool = True,
     path_method: str = "double-greedy-degree-then-fill",
-    _einsum: bool = True
+    use_einsum: bool = True
 ):
     return VStatsCalculator(expression=expression).calculate(
-        tensors=tensors, average=average, path_method=path_method,_einsum=_einsum
+        tensors=tensors, average=average, path_method=path_method,use_einsum=use_einsum
     )
 
 
@@ -43,11 +43,11 @@ def ustat(
     expression: Expression,
     average: bool = True,
     path_method: str = "double-greedy-degree-then-fill",
-    _dediag: bool = True,
-    _einsum: bool = True
+    dediag: bool = True,
+    use_einsum: bool = True
 ) -> float:
     return UStatsCalculator(expression=expression).calculate(
-            tensors=tensors, average=average, path_method=path_method, _einsum= _einsum, _dediag = _dediag)
+            tensors=tensors, average=average, path_method=path_method, use_einsum= use_einsum, dediag = dediag)
 
 
 def analyze_expression(

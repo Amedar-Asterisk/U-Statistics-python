@@ -101,24 +101,24 @@ class TensorContractionCalculator:
         tensor_dict: Dict[int, np.ndarray], 
         computing_path: List[Tuple[Set, str]] = None,
         expression: TensorExpression = None,
-        _einsum: bool = False
+        use_einsum: bool = False
     ) -> float:
         """
         Tensor contraction with two modes: path-based or direct einsum.
         
         Args:
             tensor_dict: Dictionary mapping tensor indices to tensors
-            computing_path: List of contraction steps (used when _einsum=False)
-            expression: TensorExpression containing the contraction pattern (used when _einsum=True)
-            _einsum: bool, whether to use direct einsum method
+            computing_path: List of contraction steps (used when use_einsum=False)
+            expression: TensorExpression containing the contraction pattern (used when use_einsum=True)
+            use_einsum: bool, whether to use direct einsum method
             
         Returns:
             float: Result of the tensor contraction
         """
-        if _einsum:
+        if use_einsum:
             # Direct tensor contraction using backend einsum with full expression
             if expression is None:
-                raise ValueError("expression parameter is required when _einsum=True")
+                raise ValueError("expression parameter is required when use_einsum=True")
                 
             backend = get_backend()
             
@@ -142,7 +142,7 @@ class TensorContractionCalculator:
         else:
             # Path-based tensor contraction
             if computing_path is None:
-                raise ValueError("computing_path parameter is required when _einsum=False")
+                raise ValueError("computing_path parameter is required when use_einsum=False")
                 
             position_number = max(tensor_dict.keys()) + 1
             for positions, format in computing_path:
@@ -174,10 +174,10 @@ class TensorContractionCalculator:
             tensors = self._initalize_tensor_dict(tensors, expression.shape)
         if _validate:
             self._validate_inputs(tensors, expression.shape)
-        if _einsum:
-            return self._tensor_contract(tensors, expression=expression, _einsum=True)
+        if use_einsum:
+            return self._tensor_contract(tensors, expression=expression, use_einsum=True)
         else:
             path, _ = expression.path(path_method)
             return self._tensor_contract(
-                tensors, computing_path=path, expression=expression, _einsum=False
+                tensors, computing_path=path, expression=expression, use_einsum=False
             )

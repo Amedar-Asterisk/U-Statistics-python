@@ -89,8 +89,8 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                         expression=mode,
                         average=True,
                         path_method="double-greedy-degree-then-fill",
-                        _einsum=method['einsum'],
-                        _dediag=method['dediag']
+                        use_einsum=method['einsum'],
+                        dediag=method['dediag']
                     )
                     elapsed_time = time.time() - start_time
 
@@ -187,45 +187,45 @@ if __name__ == "__main__":
     #     {'name': 'Einsum + Dediag', 'einsum': True, 'dediag': True},
     #     {'name': 'Einsum + No Dediag', 'einsum': True, 'dediag': False},
     # ]
-    set_backend("torch", "cpu") 
+
     # sizes = [1000]
     # orders = [7]
     # test_different_orders(methods = methods, orders=orders, sizes=sizes)
-    
+        
+    set_backend("torch") 
+    mode_1 = [[0, 1], [1, 1], [1, 1], [1, 4], [4, 0], [0, 6]]
+    sizes = [ 2000, 4000, 8000]
 
-mode_1 = [[0, 1], [1, 1], [1, 1], [1, 4], [4, 0], [0, 6]]
-sizes = [ 2000, 4000, 8000]
+    for n in sizes:
+        print(f"\n===== n = {n} =====")
 
-for n in sizes:
-    print(f"\n===== n = {n} =====")
+        # Torch tensors
+        tensors_torch = [torch.randn(n, n) for _ in range(6)]
+        t0 = time.time()
+        resultuse_einsum_torch = ustat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=True)
+        t1 = time.time()
+        print(f"Torch einsum time: {t1-t0:.4f} s")
 
-    # Torch tensors
-    tensors_torch = [torch.randn(n, n) for _ in range(6)]
-    t0 = time.time()
-    result_einsum_torch = vstat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=True)
-    t1 = time.time()
-    print(f"Torch einsum time: {t1-t0:.4f} s")
+        t0 = time.time()
+        result_path_torch = ustat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=False)
+        t1 = time.time()
+        print(f"Torch path time: {t1-t0:.4f} s")
 
-    t0 = time.time()
-    result_path_torch = vstat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=False)
-    t1 = time.time()
-    print(f"Torch path time: {t1-t0:.4f} s")
+        # Numpy arrays
+        tensors_np = [np.random.randn(n, n) for _ in range(6)]
+        t0 = time.time()
+        resultuse_einsum_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=True)
+        t1 = time.time()
+        print(f"Numpy einsum time: {t1-t0:.4f} s")
 
-    # Numpy arrays
-    tensors_np = [np.random.randn(n, n) for _ in range(6)]
-    t0 = time.time()
-    result_einsum_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=True)
-    t1 = time.time()
-    print(f"Numpy einsum time: {t1-t0:.4f} s")
+        t0 = time.time()
+        result_path_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=False)
+        t1 = time.time()
+        print(f"Numpy path time: {t1-t0:.4f} s")
 
-    t0 = time.time()
-    result_path_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", _einsum=False)
-    t1 = time.time()
-    print(f"Numpy path time: {t1-t0:.4f} s")
-
-    # 结果一致性
-    print("Torch results match:", abs(result_einsum_torch - result_path_torch) / abs(result_einsum_torch))
-    print("Numpy results match:", abs(result_einsum_np - result_path_np) / abs(result_einsum_np))
+        # 结果一致性
+        print("Torch results match:", abs(resultuse_einsum_torch - result_path_torch) / abs(resultuse_einsum_torch))
+        print("Numpy results match:", abs(resultuse_einsum_np - result_path_np) / abs(resultuse_einsum_np))
     
     # expr = 'ab,bb,bb,bc->ac'
     # sizes = [50, 100, 200, 400, 800, 1600]

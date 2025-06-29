@@ -75,45 +75,53 @@ class UStatsCalculator(TensorContractionCalculator):
         self.shape = self.expression.shape
    
     def calculate(
-        self,
-        tensors: List[np.ndarray],
-        average=True,
-        path_method="greedy-fill-in",
-        dediag: bool = True,
-        use_einsum: bool = False,
+        self, tensors: List[np.ndarray], average=True, path_method="double-greedy-degree-then-fill", dediag=True, use_einsum=False
     ) -> float:
         """Calculate the U statistics of a list of kernel matrices(tensors)
         with particular expression.
 
         Args:
             tensors: List[np.ndarray], a list of kernel matrices
+            average: bool, whether to average the result
+            path_method: str, path optimization method
+            dediag: bool, whether to use non-diagonal calculation
+            use_einsum: bool, whether to use direct einsum for tensor contraction
 
         Returns:
             float, the U statistics of the kernel matrices
         """
         tensors = self._initalize_tensor_dict(tensors, self.shape)
         self._validate_inputs(tensors, self.shape)
-        result = 0
+        n_samples = tensors[0].shape[0]
+        
+        # Apply dediagonalization if needed
         if dediag:
-            n_samples = tensors[0].shape[0]
             tensors = get_backend().dediag_tensors(tensors, n_samples)
+        
+        result = 0
+        
+        # Choose subexpressions based on dediag flag
+        if dediag:
             subexpressions = self.expression.non_diag_subexpressions()
         else:
             subexpressions = self.expression.subexpressions()
-
-        if use_einsum:
-            tensors = [tensors[i] for i in range(len(tensors))]
-
+        
+        # Calculate result based on use_einsum flag
         for weight, subexpression in subexpressions:
             if use_einsum:
-                result += weight * get_backend().einsum(str(subexpression), *tensors)
+                # Use einsum method
+                result += weight * TensorContractionCalculator._tensor_contract(
+                    self, tensors.copy(), expression=subexpression, use_einsum=True
+                )
             else:
+                # Use path-based method
                 path, _ = subexpression.path(path_method)
                 result += weight * TensorContractionCalculator._tensor_contract(
-                    self, tensors.copy(), path
+                    self, tensors.copy(), computing_path=path, use_einsum=False
                 )
+        
+        # Apply averaging if needed
         if average:
-            n_samples = tensors[0].shape[0]
             return result / get_backend().prod(
                 range(n_samples, n_samples - self.order, -1)
             )
