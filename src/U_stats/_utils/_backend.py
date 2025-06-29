@@ -2,6 +2,7 @@ import itertools
 from typing import Dict, Union, Any, Callable, Optional, List, Tuple, TypeVar
 import numpy as np
 import opt_einsum as oe
+
 try:
     import torch
 
@@ -18,7 +19,7 @@ DType = Union[np.dtype, torch.dtype, None]
 class Backend:
     def __init__(self, backend: str = "numpy", device: str = None) -> None:
         self.backend: str = backend.lower()
-        self.device_str = device 
+        self.device_str = device
 
         if self.backend not in ["numpy", "torch"]:
             raise ValueError(

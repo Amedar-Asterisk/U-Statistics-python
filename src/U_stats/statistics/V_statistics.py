@@ -9,7 +9,6 @@ __all__ = ["VStatsCalculator"]
 
 
 class VExpression(TensorExpression):
-
     def __init__(self, expression: Expression):
         super().__init__(expression)
         self._path = {}
@@ -28,7 +27,6 @@ class VExpression(TensorExpression):
 
 
 class VStatsCalculator(TensorContractionCalculator):
-
     def __init__(self, expression: Expression):
         self.expression = VExpression(expression)
         self.shape = self.expression.shape
@@ -45,14 +43,20 @@ class VStatsCalculator(TensorContractionCalculator):
         tensors = TensorContractionCalculator._initalize_tensor_dict(
             self, tensors, self.shape
         )
-        TensorContractionCalculator._validate_inputs(self, tensors, self.shape)       
+        TensorContractionCalculator._validate_inputs(self, tensors, self.shape)
         if use_einsum:
-            result = self._tensor_contract(tensors, expression=self.expression, use_einsum=True)
+            result = self._tensor_contract(
+                tensors, expression=self.expression, use_einsum=True
+            )
         else:
             path = self.expression.path(path_method)
             result = self._tensor_contract(
-                tensors, computing_path=path, expression=self.expression, use_einsum=False)         
-            
+                tensors,
+                computing_path=path,
+                expression=self.expression,
+                use_einsum=False,
+            )
+
         if average:
             return result / (n_samples**self.order)
         return result

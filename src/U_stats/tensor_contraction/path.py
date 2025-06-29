@@ -25,24 +25,20 @@ class _IndexRegistry:
         self._location_map: Dict[int, Set[int]] = {}
 
     def copy(self) -> "_IndexRegistry":
-
         new_registry = _IndexRegistry()
         new_registry._location_map = deepcopy(self._location_map)
         return new_registry
 
     @property
     def indices(self) -> Set[int]:
-
         return set(self._location_map.keys())
 
     def append(self, index: int, location: int) -> None:
-
         if index not in self._location_map:
             self._location_map[index] = set()
         self._location_map[index].add(location)
 
     def remove(self, index: int, location: int) -> None:
-
         if index in self._location_map:
             self._location_map[index].discard(location)
             if not self._location_map[index]:
@@ -59,12 +55,10 @@ class _IndexRegistry:
                 self._location_map[objective].update(positions)
 
     def locations(self, index: int) -> List[int]:
-
         return sorted(list(self._location_map.get(index, set())))
 
 
 class TensorExpression:
-
     __size: int = 10**4
 
     def __init__(self, expression: Optional[Expression] = None) -> None:

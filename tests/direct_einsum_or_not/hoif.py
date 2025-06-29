@@ -7,11 +7,10 @@ from U_stats._utils._backend import set_backend
 from U_stats.statistics.U_statistics import U_stats_loop
 
 
-
 def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
     """
     Test tensor contraction performance across different methods and sizes
-    
+
     Args:
         order: Order of the tensor contraction (e.g., 7 for 7th order). Default is 7.
                This determines the number of tensor pairs in the mode expression.
@@ -23,33 +22,32 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
         sizes: List of tensor sizes to test. If None, uses default sizes.
         seed: Random seed for reproducible results
     """
-    
+
     # Validate order parameter
     if order < 2:
         raise ValueError("Order must be at least 2")
-    
+
     # Default methods if none specified
     if methods is None:
         methods = [
-            {'name': 'For loop', 'einsum': True, 'dediag': False},
-            {'name': 'Path + No Dediag', 'einsum': False, 'dediag': False},
-            {'name': 'Path + Dediag', 'einsum': False, 'dediag': True},
-            {'name': 'Einsum + Dediag', 'einsum': True, 'dediag': True},
-            {'name': 'Einsum + No Dediag', 'einsum': True, 'dediag': False},
-
+            {"name": "For loop", "einsum": True, "dediag": False},
+            {"name": "Path + No Dediag", "einsum": False, "dediag": False},
+            {"name": "Path + Dediag", "einsum": False, "dediag": True},
+            {"name": "Einsum + Dediag", "einsum": True, "dediag": True},
+            {"name": "Einsum + No Dediag", "einsum": True, "dediag": False},
         ]
-    
+
     # Default sizes if none specified
     if sizes is None:
         sizes = [100, 200, 300, 500, 700, 1000]
-    
+
     # Generate the motif expression based on order
     # For order m: [["1", "2"], ["2", "3"], ..., ["m-1", "m"]]
-    mode = [[str(i), str(i+1)] for i in range(1, order)]
-    
+    mode = [[str(i), str(i + 1)] for i in range(1, order)]
+
     # Number of tensors needed is order - 1
     num_tensors = order - 1
-    
+
     print("=" * 80)
     print("Tensor Contraction Performance Test")
     print(f"Order: {order} (using {num_tensors} tensors)")
@@ -58,29 +56,26 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
     print("=" * 80)
     print(f"{'Size':<8} {'Method':<25} {'Time(s)':<12} {'Result':<15} {'Match':<8}")
     print("-" * 80)
-    
+
     for size in sizes:
         print(f"\nTesting tensor size: {size}x{size} (Order {order})")
-        
+
         # Generate random tensors with fixed seed for reproducibility
         np.random.seed(seed)
         tensor = np.random.rand(size, size)
         tensors = [tensor for _ in range(num_tensors)]
-        
+
         results = {}
         times = {}
-        
+
         for i, method in enumerate(methods):
             method_key = f"method_{i}"
 
             try:
-                if method['name'] == 'For loop':
+                if method["name"] == "For loop":
                     # Special case for For loop method
                     start_time = time.time()
-                    result = U_stats_loop(
-                        tensors=tensors,
-                        expression=mode
-                    )
+                    result = U_stats_loop(tensors=tensors, expression=mode)
                     elapsed_time = time.time() - start_time
                 else:
                     start_time = time.time()
@@ -89,8 +84,8 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                         expression=mode,
                         average=True,
                         path_method="double-greedy-degree-then-fill",
-                        use_einsum=method['einsum'],
-                        dediag=method['dediag']
+                        use_einsum=method["einsum"],
+                        dediag=method["dediag"],
                     )
                     elapsed_time = time.time() - start_time
 
@@ -119,7 +114,7 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
         baseline_result = results[baseline_key]
 
         if isinstance(baseline_result, (torch.Tensor, np.ndarray)):
-            if hasattr(baseline_result, 'item'):
+            if hasattr(baseline_result, "item"):
                 baseline_val = baseline_result.item()
             else:
                 baseline_val = float(baseline_result)
@@ -138,7 +133,7 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                 match = "-"
             else:
                 if isinstance(result_val, (torch.Tensor, np.ndarray)):
-                    if hasattr(result_val, 'item'):
+                    if hasattr(result_val, "item"):
                         result_val = result_val.item()
                     else:
                         result_val = float(result_val)
@@ -147,19 +142,25 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                 if i == 0:
                     match = "BASE"
                 elif baseline_val is not None:
-                    match = "✓" if abs(result_val - baseline_val) < 1e-6 * abs(baseline_val) else "✗"
+                    match = (
+                        "✓"
+                        if abs(result_val - baseline_val) < 1e-6 * abs(baseline_val)
+                        else "✗"
+                    )
                 else:
                     match = "-"
 
-            print(f"{size:<8} {method['name']:<25} {time_val:<12} {result_str:<15} {match:<8}")
+            print(
+                f"{size:<8} {method['name']:<25} {time_val:<12} {result_str:<15} {match:<8}"
+            )
 
-    
     print("\n" + "=" * 80)
     print("Test completed!")
     print("BASE = Baseline method")
     print("✓ = Results match baseline")
     print("✗ = Results differ from baseline")
-    
+
+
 def test_different_orders(methods, orders, sizes):
     """Test multiple orders with small sizes"""
     print("Testing different orders:")
@@ -169,16 +170,18 @@ def test_different_orders(methods, orders, sizes):
         print(f"Testing Order {order}")
         print(f"{'='*50}")
         try:
-            test_tensor_performance(methods = methods, order=order, sizes=sizes)
+            test_tensor_performance(methods=methods, order=order, sizes=sizes)
         except Exception as e:
             print(f"❌ Failed to test order {order}:")
             print(f"   Error: {type(e).__name__}: {str(e)}")
             print(f"   Full traceback:")
             print(traceback.format_exc())
             print(f"   Continuing with next order...")
-        
+
+
 if __name__ == "__main__":
     import os
+
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     # methods = [
     #     # {'name': 'For loop', 'einsum': True, 'dediag': False},
@@ -191,10 +194,11 @@ if __name__ == "__main__":
     # sizes = [1000]
     # orders = [7]
     # test_different_orders(methods = methods, orders=orders, sizes=sizes)
-        
-    set_backend("torch") 
+
+    set_backend("torch")
     mode_1 = [[0, 1], [1, 1], [1, 1], [1, 4], [4, 0], [0, 6]]
-    sizes = [ 2000, 4000, 8000]
+    mode_1 = [[str(i), str(i + 1)] for i in range(6)]  # Mode expression for 7th order
+    sizes = [2000, 4000, 8000]
 
     for n in sizes:
         print(f"\n===== n = {n} =====")
@@ -202,27 +206,58 @@ if __name__ == "__main__":
         # Torch tensors
         tensors_torch = [torch.randn(n, n) for _ in range(6)]
         t0 = time.time()
-        resultuse_einsum_torch = ustat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=True)
+        resultuse_einsum_torch = ustat(
+            tensors_torch,
+            mode_1,
+            average=True,
+            path_method="double-greedy-degree-then-fill",
+            use_einsum=True,
+        )
         t1 = time.time()
         print(f"Torch einsum time: {t1-t0:.4f} s")
+        print(f"Torch einsum result: {resultuse_einsum_torch:.6f}")
 
         t0 = time.time()
-        result_path_torch = ustat(tensors_torch, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=False)
+        result_path_torch = ustat(
+            tensors_torch,
+            mode_1,
+            average=True,
+            path_method="double-greedy-degree-then-fill",
+            use_einsum=False,
+        )
         t1 = time.time()
         print(f"Torch path time: {t1-t0:.4f} s")
 
         # Numpy arrays
         tensors_np = [np.random.randn(n, n) for _ in range(6)]
         t0 = time.time()
-        resultuse_einsum_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=True)
+        resultuse_einsum_np = ustat(
+            tensors_np,
+            mode_1,
+            average=True,
+            path_method="double-greedy-degree-then-fill",
+            use_einsum=True,
+        )
         t1 = time.time()
         print(f"Numpy einsum time: {t1-t0:.4f} s")
 
         t0 = time.time()
-        result_path_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=False)
+        result_path_np = ustat(
+            tensors_np,
+            mode_1,
+            average=True,
+            path_method="double-greedy-degree-then-fill",
+            use_einsum=False,
+        )
         t1 = time.time()
         print(f"Numpy path time: {t1-t0:.4f} s")
-        
-        print("Torch results match:", abs(resultuse_einsum_torch - result_path_torch) / abs(resultuse_einsum_torch))
-        print("Numpy results match:", abs(resultuse_einsum_np - result_path_np) / abs(resultuse_einsum_np))
-    
+
+        print(
+            "Torch results match:",
+            abs(resultuse_einsum_torch - result_path_torch)
+            / abs(resultuse_einsum_torch),
+        )
+        print(
+            "Numpy results match:",
+            abs(resultuse_einsum_np - result_path_np) / abs(resultuse_einsum_np),
+        )

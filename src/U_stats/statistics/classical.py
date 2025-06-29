@@ -9,7 +9,6 @@ from .._utils import get_backend
 # Removed redundant `get_*_backend` wrapper functions.
 @dataclass
 class _Expression:
-
     input_expression: List[str]
     output_expression: str
     contracted_indices: List[str]

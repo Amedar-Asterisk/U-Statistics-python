@@ -14,7 +14,6 @@ __all__ = [
 
 
 class UExpression(TensorExpression):
-
     def __init__(self, expression: Expression):
         super().__init__(expression)
 
@@ -73,9 +72,14 @@ class UStatsCalculator(TensorContractionCalculator):
         self.expression = UExpression(expression)
         self.order = self.expression.order
         self.shape = self.expression.shape
-   
+
     def calculate(
-        self, tensors: List[np.ndarray], average=True, path_method="double-greedy-degree-then-fill", dediag=True, use_einsum=False
+        self,
+        tensors: List[np.ndarray],
+        average=True,
+        path_method="double-greedy-degree-then-fill",
+        dediag=True,
+        use_einsum=False,
     ) -> float:
         """Calculate the U statistics of a list of kernel matrices(tensors)
         with particular expression.
@@ -93,19 +97,19 @@ class UStatsCalculator(TensorContractionCalculator):
         tensors = self._initalize_tensor_dict(tensors, self.shape)
         self._validate_inputs(tensors, self.shape)
         n_samples = tensors[0].shape[0]
-        
+
         # Apply dediagonalization if needed
         if dediag:
             tensors = get_backend().dediag_tensors(tensors, n_samples)
-        
+
         result = 0
-        
+
         # Choose subexpressions based on dediag flag
         if dediag:
             subexpressions = self.expression.non_diag_subexpressions()
         else:
             subexpressions = self.expression.subexpressions()
-        
+
         # Calculate result based on use_einsum flag
         for weight, subexpression in subexpressions:
             if use_einsum:
@@ -119,7 +123,7 @@ class UStatsCalculator(TensorContractionCalculator):
                 result += weight * TensorContractionCalculator._tensor_contract(
                     self, tensors.copy(), computing_path=path, use_einsum=False
                 )
-        
+
         # Apply averaging if needed
         if average:
             return result / get_backend().prod(

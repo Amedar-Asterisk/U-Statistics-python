@@ -25,7 +25,6 @@ TupledPath = List[Tuple[List[int], str, List[Tuple[int]]]]
 
 
 class PathInfo:
-
     def __init__(
         self,
         contraction_list: ContractionListType = [],
