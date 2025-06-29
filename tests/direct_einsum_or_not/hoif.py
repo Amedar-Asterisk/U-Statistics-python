@@ -2,11 +2,11 @@ from U_stats import ustat, vstat
 import numpy as np
 import torch
 import time
-import traceback  # 添加 traceback 模块用于完整错误信息
+import traceback  # Added traceback module for complete error information
 from U_stats._utils._backend import set_backend
 from U_stats.statistics.U_statistics import U_stats_loop
 
-set_backend("torch", "cpu")
+
 
 def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
     """
@@ -102,7 +102,7 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                 times[method_key] = "-"
                 print(f"  ⚠️  Skipped '{method['name']}' due to memory/runtime error:")
                 print(f"      Error: {type(e).__name__}: {str(e)}")
-                # 如果需要看到完整的错误堆栈，取消注释下面这行
+                # Uncomment the line below if full error stack trace is needed
                 # print(f"      Full traceback:\n{traceback.format_exc()}")
 
             except Exception as e:
@@ -111,7 +111,7 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                 print(f"  ❗ Unexpected error in '{method['name']}':")
                 print(f"      Error: {type(e).__name__}: {str(e)}")
                 print(f"      Full traceback:")
-                # 显示完整的错误堆栈
+                # Show full error stack trace
                 print(traceback.format_exc())
 
         # Use first method as baseline for comparison
@@ -159,38 +159,34 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
     print("BASE = Baseline method")
     print("✓ = Results match baseline")
     print("✗ = Results differ from baseline")
-
-
-
-def test_different_orders(orders, sizes):
+    
+def test_different_orders(methods, orders, sizes):
     """Test multiple orders with small sizes"""
     print("Testing different orders:")
-    
+
     for order in orders:
         print(f"\n{'='*50}")
         print(f"Testing Order {order}")
         print(f"{'='*50}")
-        # 在每个order测试时也用try-except包装，以防整个测试失败
         try:
-            test_tensor_performance(order=order, sizes=sizes)
+            test_tensor_performance(methods = methods, order=order, sizes=sizes)
         except Exception as e:
             print(f"❌ Failed to test order {order}:")
             print(f"   Error: {type(e).__name__}: {str(e)}")
             print(f"   Full traceback:")
             print(traceback.format_exc())
             print(f"   Continuing with next order...")
-
-
+        
 if __name__ == "__main__":
 
-    # methods = [
-    #     {'name': 'For loop', 'einsum': True, 'dediag': False},
-    #     {'name': 'Path + No Dediag', 'einsum': False, 'dediag': False},
-    #     {'name': 'Path + Dediag', 'einsum': False, 'dediag': True},
-    #     {'name': 'Einsum + Dediag', 'einsum': True, 'dediag': True},
-    #     {'name': 'Einsum + No Dediag', 'einsum': True, 'dediag': False},
-    # ]
-    
-    sizes = [10]
-    orders = [2, 3, 4, 5, 6, 7]
-    test_different_orders(orders=orders, sizes=sizes)
+    methods = [
+        # {'name': 'For loop', 'einsum': True, 'dediag': False},
+        {'name': 'Path + No Dediag', 'einsum': False, 'dediag': False},
+        {'name': 'Path + Dediag', 'einsum': False, 'dediag': True},
+        {'name': 'Einsum + Dediag', 'einsum': True, 'dediag': True},
+        {'name': 'Einsum + No Dediag', 'einsum': True, 'dediag': False},
+    ]
+    set_backend("torch", "cpu") 
+    sizes = [1000]
+    orders = [7]
+    test_different_orders(methods = methods, orders=orders, sizes=sizes)
