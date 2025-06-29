@@ -102,7 +102,7 @@ class UStatsCalculator(TensorContractionCalculator):
             subexpressions = self.expression.subexpressions()
 
         if use_einsum:
-            tensors = [tensors[i] for i in tensors]
+            tensors = [tensors[i] for i in range(len(tensors))]
 
         for weight, subexpression in subexpressions:
             if use_einsum:
