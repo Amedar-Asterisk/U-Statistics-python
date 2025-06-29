@@ -222,35 +222,7 @@ if __name__ == "__main__":
         result_path_np = vstat(tensors_np, mode_1, average=True, path_method="double-greedy-degree-then-fill", use_einsum=False)
         t1 = time.time()
         print(f"Numpy path time: {t1-t0:.4f} s")
-
-        # 结果一致性
+        
         print("Torch results match:", abs(resultuse_einsum_torch - result_path_torch) / abs(resultuse_einsum_torch))
         print("Numpy results match:", abs(resultuse_einsum_np - result_path_np) / abs(resultuse_einsum_np))
     
-    # expr = 'ab,bb,bb,bc->ac'
-    # sizes = [50, 100, 200, 400, 800, 1600]
-
-    # for n in sizes:
-    #     print(f"\n===== n = {n} =====")
-    #     a1 = np.random.rand(n, n)
-    #     a2 = np.random.rand(n, n)
-    #     a3 = np.random.rand(n, n)
-    #     a4 = np.random.rand(n, n)
-    #     a5 = np.random.rand(n, n)
-    #     a6 = np.random.rand(n, n)
-    #     operands = [a1, a2, a3, a4]
-
-    #     # 默认顺序
-    #     t0 = time.time()
-    #     res_default = np.einsum(expr, *operands)
-    #     t1 = time.time()
-    #     print(f"Default path time: {t1-t0:.4f} s")
-
-    #     # 优化路径
-    #     t0 = time.time()
-    #     res_opt = np.einsum(expr, *operands, optimize='optimal')
-    #     t1 = time.time()
-    #     print(f"Optimal path time: {t1-t0:.4f} s")
-
-    #     # 检查结果一致性
-    #     print("Results match:", np.allclose(res_default, res_opt))
