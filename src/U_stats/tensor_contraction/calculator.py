@@ -60,34 +60,24 @@ class TensorContractionCalculator:
         Returns:
             str: Einsum string format
         """
-        # Get the expression indices for each tensor from _pair_dict
         tensor_indices = []
         for pos in sorted(expression._pair_dict.keys()):
             tensor_indices.append(expression._pair_dict[pos])
-
-        # Convert indices to characters for einsum
-        # Create a mapping from indices to letters
         all_indices = set()
         for tensor_idx_list in tensor_indices:
             all_indices.update(tensor_idx_list)
 
-        # Sort indices for consistent mapping
         sorted_indices = sorted(all_indices)
         index_to_char = {idx: chr(ord("a") + i) for i, idx in enumerate(sorted_indices)}
-
-        # Build input parts of einsum string
         input_parts = []
         for tensor_idx_list in tensor_indices:
             input_part = "".join(index_to_char[idx] for idx in tensor_idx_list)
             input_parts.append(input_part)
 
-        # Build output part (indices that appear an odd number of times are free indices)
         index_count = {}
         for tensor_idx_list in tensor_indices:
             for idx in tensor_idx_list:
                 index_count[idx] = index_count.get(idx, 0) + 1
-
-        # Always create a scalar contraction
         einsum_string = ",".join(input_parts) + "->"
 
         return einsum_string
@@ -120,17 +110,15 @@ class TensorContractionCalculator:
 
             backend = get_backend()
 
-            # Build the einsum string from the expression
             einsum_string = self._build_einsum_string(expression)
 
-            # Sort tensors by their indices to match the einsum string order
+
             sorted_indices = sorted(tensor_dict.keys())
             tensors = [tensor_dict[i] for i in sorted_indices]
 
-            # Perform the full contraction in one einsum operation
             result = backend.einsum(einsum_string, *tensors)
 
-            # If result is a scalar tensor, convert to scalar
+
             if hasattr(result, "item") and result.ndim == 0:
                 return result.item()
             elif hasattr(result, "shape") and len(result.shape) == 0:
@@ -163,11 +151,11 @@ class TensorContractionCalculator:
         _validate: bool = True,
         _init_expression=True,
         _init_tensor=True,
-        _use_einsum: bool = False,
+        use_einsum: bool = False,
     ) -> float:
         if _init_expression:
             expression = self._initalize_expression(expression)
-        if _use_einsum:
+        if use_einsum:
             return get_backend().einsum(str(expression), *tensors)
         if _init_tensor:
             tensors = self._initalize_tensor_dict(tensors, expression.shape)

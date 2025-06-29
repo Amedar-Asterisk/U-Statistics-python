@@ -105,7 +105,7 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                 times[method_key] = "-"
                 print(f"  ❗ Unexpected error in '{method['name']}':")
                 print(f"      Error: {type(e).__name__}: {str(e)}")
-                print(f"      Full traceback:")
+                print("      Full traceback:")
                 # Show full error stack trace
                 print(traceback.format_exc())
 
@@ -150,9 +150,13 @@ def test_tensor_performance(order=7, methods=None, sizes=None, seed=42):
                 else:
                     match = "-"
 
-            print(
-                f"{size:<8} {method['name']:<25} {time_val:<12} {result_str:<15} {match:<8}"
-            )
+    print(
+        f"{size:<8} "
+        f"{method['name']:<25} "
+        f"{time_val:<12} "
+        f"{result_str:<15} "
+        f"{match:<8}"
+    )
 
     print("\n" + "=" * 80)
     print("Test completed!")
@@ -174,9 +178,9 @@ def test_different_orders(methods, orders, sizes):
         except Exception as e:
             print(f"❌ Failed to test order {order}:")
             print(f"   Error: {type(e).__name__}: {str(e)}")
-            print(f"   Full traceback:")
+            print("   Full traceback:")
             print(traceback.format_exc())
-            print(f"   Continuing with next order...")
+            print("   Continuing with next order...")
 
 
 if __name__ == "__main__":

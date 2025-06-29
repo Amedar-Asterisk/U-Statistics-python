@@ -3,7 +3,7 @@ from ..tensor_contraction.path import TensorExpression
 from .._utils import Expression
 from typing import List
 import numpy as np
-from .._utils import get_backend
+
 
 __all__ = ["VStatsCalculator"]
 
