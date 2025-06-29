@@ -30,15 +30,15 @@ def get_adj_list(cover: MutableSequence[MutableSequence[T]]) -> Dict[T, Set[T]]:
 
 
 @overload
-def partitions(m: int, k: int) -> Generator[List[Set[int]], None, None]:  # noqa: E704
-    ...
+def partitions(  # noqa: E704
+    m: int, k: int
+) -> Generator[List[Set[int]], None, None]: ...
 
 
 @overload
 def partitions(  # noqa: E704
     elements: Union[Sequence[T], Set[T]], k: int
-) -> Generator[List[Set[T]], None, None]:
-    ...
+) -> Generator[List[Set[T]], None, None]: ...
 
 
 def partitions(
