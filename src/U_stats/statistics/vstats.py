@@ -1,4 +1,4 @@
-from typing import List, Hashable, Generator, Tuple, Dict, Set, Sequence
+from typing import List, Tuple, Dict
 from functools import cached_property
 from .._utils import (
     standardize_indices,

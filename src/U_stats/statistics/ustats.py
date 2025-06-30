@@ -108,7 +108,8 @@ class UStats:
         if _dediag:
             if self._reserved_indices:
                 warnings.warn(
-                    "Dediagonalization is not supported for U statistics with tensor result.",
+                    "Dediagonalization is not supported",
+                    "for U statistics with tensor result.",
                 )
                 _dediag = False
             else:
