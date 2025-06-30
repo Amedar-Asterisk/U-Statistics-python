@@ -39,8 +39,8 @@ class Backend:
                 "to_tensor": np.asarray,
                 "zeros": np.zeros,
                 "sign": np.sign,
-                "einsum": lambda eq, *ops: oe.contract(
-                    eq, *ops, backend="numpy", optimize="greedy"
+                "einsum": lambda eq, *ops, **kwargs: oe.contract(
+                    eq, *ops, backend="numpy", **kwargs
                 ),
                 "prod": np.prod,
                 "arange": np.arange,
@@ -53,8 +53,8 @@ class Backend:
                     shape, dtype=dtype, device=self.device
                 ),
                 "sign": lambda x: torch.sign(self.to_tensor(x)),
-                "einsum": lambda eq, *ops: oe.contract(
-                    eq, *ops, backend="torch", optimize="greedy"
+                "einsum": lambda eq, *ops, **kwargs: oe.contract(
+                    eq, *ops, backend="torch", **kwargs
                 ),
                 "prod": lambda x: torch.prod(self.to_tensor(x).float()),
                 "arange": lambda dim: torch.arange(dim, device=self.device),
@@ -88,8 +88,8 @@ class Backend:
     def sign(self, x: TensorType) -> TensorType:
         return self._get_op("sign")(x)
 
-    def einsum(self, equation: str, *operands: TensorType) -> TensorType:
-        return self._get_op("einsum")(equation, *operands)
+    def einsum(self, equation: str, *operands: TensorType, **kwargs) -> TensorType:
+        return self._get_op("einsum")(equation, *operands, **kwargs)
 
     def prod(
         self, range_tuple: Union[range, List[int], Tuple[int, ...]]
@@ -114,12 +114,12 @@ class Backend:
         return self._get_op("broadcast_to")(mask, (dim,) * ndim)
 
     def dediag_tensors(
-        self, tensors: Dict[int, TensorType], sample_size: int
+        self, tensors: List[TensorType], sample_size: int
     ) -> Dict[int, TensorType]:
         masks: Dict[int, TensorType] = {}
 
-        for index, tensor in tensors.items():
-            ndim: int = self._get_op("ndim")(tensor)
+        for k in range(len(tensors)):
+            ndim: int = self._get_op("ndim")(tensors[k])
             if ndim > 1:
                 if ndim not in masks:
                     mask_total: TensorType = self._get_op("zeros")(
@@ -132,7 +132,7 @@ class Backend:
                         mask_total |= mask
                     masks[ndim] = ~mask_total
 
-                tensors[index] = tensors[index] * masks[ndim]
+                tensors[k] = tensors[k] * masks[ndim]
 
         return tensors
 
@@ -161,7 +161,7 @@ def get_backend() -> "Backend":
     return _BACKEND
 
 
-def set_backend(backend_name: str, device: str = None) -> None:
+def set_backend(backend_name: str) -> None:
     """
     Set the global backend for tensor operations.
 
@@ -178,4 +178,4 @@ def set_backend(backend_name: str, device: str = None) -> None:
         the current backend, or reimport modules that use the backend.
     """
     global _BACKEND
-    _BACKEND = Backend(backend_name, device)
+    _BACKEND = Backend(backend_name)
