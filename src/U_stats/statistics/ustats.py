@@ -45,10 +45,6 @@ class UStats:
         self._contracted_indices = set(itertools.chain(*inputs))
         for index in self._reserved_indices:
             self._contracted_indices.discard(index)
-        print(type(self._reserved_indices))
-        print(f"UStats initialized with expression: {self._ep}")
-        print(f"Contracted indices: {self._contracted_indices}")
-        print(f"Reserved indices: {self._reserved_indices}")
 
     @property
     def expression(self) -> str:
@@ -87,7 +83,6 @@ class UStats:
 
     def _get_subexpression(self, partition: List[Set[str]]) -> Tuple[float, str]:
         weight = partition_weight(partition)
-        print(f"Weight for partition {partition}: {weight}")
         mapping = {}
         subexpression = self.expression
         for part in partition:
@@ -111,7 +106,6 @@ class UStats:
     ) -> float | np.ndarray:
         backend = get_backend()
         if _dediag:
-            print(bool(self._reserved_indices))
             if self._reserved_indices:
                 warnings.warn(
                     "Dediagonalization is not supported for U statistics with tensor result.",
@@ -132,7 +126,7 @@ class UStats:
             ns = tensors[i].shape[j]
             order = self.order
             return result / backend.prod(range(ns, ns - order, -1))
-        return result
+        return backend.to_numpy(result)
 
     def __call__(self, *args, **kwds):
         return self.calculate(*args, **kwds)

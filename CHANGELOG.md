@@ -1,3 +1,15 @@
+## 0.5.0 (2025-06-30)
+
+### Fix
+
+- update input_subscripts assignment in analyze_path method
+- remove unused imports in U_statistics, V_statistics, calculator, and path modules
+- correct device assignment in Backend class
+
+### Refactor
+
+- **Ustats-Vstats-tensor_contraction**: remove all path search alg of ours. fully use opt_einsum to perform tensorcontraction
+
 ## 0.4.3 (2025-06-25)
 
 ### Fix

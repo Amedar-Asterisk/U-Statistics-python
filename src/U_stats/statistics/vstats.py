@@ -81,4 +81,4 @@ class VStats:
             ns = tensors[i].shape[j]
             order = self.order
             return result / backend.prod(range(ns, ns - order, -1))
-        return result
+        return backend.to_numpy(result)

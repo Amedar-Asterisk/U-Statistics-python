@@ -60,6 +60,7 @@ class Backend:
                 "arange": lambda dim: torch.arange(dim, device=self.device),
                 "ndim": lambda x: x.dim(),
                 "broadcast_to": lambda x, shape: x.broadcast_to(shape),
+                "to_numpy": lambda x: x.cpu().numpy(),
             },
         }
 
@@ -135,6 +136,20 @@ class Backend:
                 tensors[k] = tensors[k] * masks[ndim]
 
         return tensors
+
+    def to_numpy(self, x: TensorType) -> np.ndarray:
+        """
+        Convert a tensor to a NumPy array.
+
+        Args:
+            x: The tensor to convert.
+
+        Returns:
+            A NumPy array representation of the tensor.
+        """
+        if self.backend == "torch":
+            return self._get_op("to_numpy")(x)
+        return np.asarray(x)
 
     def __enter__(self) -> "Backend":
         global _BACKEND

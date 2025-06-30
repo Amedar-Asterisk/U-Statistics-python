@@ -1,6 +1,5 @@
-from U_stats import ustat, UStats, set_backend, get_backend
+from U_stats import ustat, set_backend, get_backend
 import numpy as np
-import opt_einsum as oe
 from time import time
 
 
