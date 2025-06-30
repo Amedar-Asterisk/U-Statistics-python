@@ -1,5 +1,5 @@
-from .U_statistics import *
-from .V_statistics import *
+from .ustats import *
+from .vstats import *
 
 
-__all__ = U_statistics.__all__ + V_statistics.__all__
+__all__ = ustats.__all__ + vstats.__all__

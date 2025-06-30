@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .U2V import get_all_partitions, partition_weight
+from .u2v import get_all_partitions, partition_weight
 from typing import List, Set
 import numpy as np
 
