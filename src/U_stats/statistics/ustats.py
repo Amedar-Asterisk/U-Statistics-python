@@ -144,7 +144,8 @@ class UStats:
         """
         if self._reserved_indices:
             raise ValueError(
-                "Complexity calculation is not supported for U statistics with reserved indices."
+                "Complexity calculation is not supported",
+                "for U statistics with reserved indices.",
             )
         shapes = [(n,) * len(inputs) for inputs in self._inputs]
         info = ComplexityInfo()
