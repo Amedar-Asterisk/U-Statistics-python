@@ -1,4 +1,4 @@
-from U_stats.statistics.classical import (
+from u_stats.statistics.classical import (
     spearman_rho,
     bergsma_dassios_t,
     hoeffding_d,
@@ -9,7 +9,7 @@ import numpy as np
 from time import time
 from itertools import permutations
 
-from U_stats import ustat
+from u_stats import ustat
 
 
 def test_sperman_rho():
