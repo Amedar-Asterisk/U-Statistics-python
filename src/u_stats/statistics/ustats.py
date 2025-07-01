@@ -300,6 +300,7 @@ class UStats:
         """
         backend = get_backend()
 
+        tensors = [backend.to_tensor(tensor) for tensor in tensors]
         # Handle dediagonalization
         if _dediag:
             if self._reserved_indices:
