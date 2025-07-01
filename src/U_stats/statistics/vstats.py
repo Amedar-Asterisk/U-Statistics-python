@@ -16,8 +16,6 @@ __all__ = ["VStats"]
 
 
 class VStats:
-    """A class for calculating the U statistics of a list of kernel
-    matrices(tensors) with particular expression."""
 
     def __init__(self, expression: str | Tuple[Inputs, Outputs] | Inputs):
         if isinstance(expression, str):

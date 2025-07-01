@@ -15,9 +15,11 @@ from .._utils import (
     Inputs,
     Outputs,
 )
+from .._utils._typing import ComplexityInfo
 import numpy as np
 import itertools
 import warnings
+import opt_einsum as oe
 
 __all__ = [
     "UStats",
@@ -131,6 +133,31 @@ class UStats:
 
     def __call__(self, *args, **kwds):
         return self.calculate(*args, **kwds)
+
+    def complexity(
+        self, optimize: str = "greedy", n: int = 10**4, _dediag: bool = True, **kwargs
+    ) -> int:
+        """
+        Calculate the complexity of the U statistics expression.
+        The complexity is defined as the number of multiplications required
+        to compute the U statistics.
+        """
+        if self._reserved_indices:
+            raise ValueError(
+                "Complexity calculation is not supported for U statistics with reserved indices."
+            )
+        shapes = [(n,) * len(inputs) for inputs in self._inputs]
+        info = ComplexityInfo()
+        subexpressions = self._get_all_subexpressions(dediag=_dediag)
+        for _, subexpression in subexpressions:
+            _, path_info = oe.contract_path(
+                subexpression, *shapes, optimize=optimize, shapes=True, **kwargs
+            )
+            scaling = max(path_info.scale_list)
+            flops = path_info.opt_cost
+            largest_intermediate = path_info.largest_intermediate
+            info.update(scaling, flops, largest_intermediate)
+        return info.scaling, info.flops, info.largest_intermediate
 
 
 def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> float:
