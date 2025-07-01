@@ -38,12 +38,10 @@ class VStats:
 
     @property
     def expression(self) -> str:
-        """Get the expression of the U statistics."""
         return self._ep
 
     @cached_property
     def order(self) -> int:
-        """Get the order of the U statistics."""
         return len(self._contracted_indices)
 
     @cached_property
@@ -70,7 +68,6 @@ class VStats:
     def calculate(
         self, tensors: List[np.ndarray], average: bool = True, **kwargs
     ) -> float | np.ndarray:
-        """Calculate the U statistics for the given tensors."""
         backend = get_backend()
         result = backend.einsum(self._ep, *tensors, **kwargs)
 
