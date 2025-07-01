@@ -13,7 +13,7 @@ import opt_einsum as oe
 
 TensorType = TypeVar("TensorType", np.ndarray, "torch.Tensor")
 ShapeType = Union[Tuple[int, ...], List[int]]
-DType = Union[np.dtype, torch.dtype, None]
+DType = Union[np.dtype, "torch.dtype", None]
 
 
 class Backend:
@@ -72,7 +72,7 @@ class Backend:
         else:
             self.device = None
 
-    def _torch_to_tensor(self, x: Any) -> torch.Tensor:
+    def _torch_to_tensor(self, x: Any) -> "torch.Tensor":
         if isinstance(x, torch.Tensor):
             return x.to(self.device)
         return torch.tensor(x, device=self.device)
