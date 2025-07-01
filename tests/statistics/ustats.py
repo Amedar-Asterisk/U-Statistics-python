@@ -1,4 +1,4 @@
-from U_stats import ustat, set_backend, get_backend
+from u_stats import ustat, set_backend, get_backend
 import numpy as np
 from time import time
 

@@ -1,3 +1,20 @@
+## 0.6.1 (2025-07-01)
+
+### Fix
+
+- improve error message for complexity calculation in UStats
+
+## 0.6.0 (2025-07-01)
+
+### Feat
+
+- add ComplexityInfo class and complexity calculation to UStats
+
+### Fix
+
+- update type hint for DType and _torch_to_tensor method
+- improve warning message for dediagonalization in UStats class
+
 ## 0.5.0 (2025-06-30)
 
 ### Fix

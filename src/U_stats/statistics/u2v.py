@@ -146,26 +146,3 @@ def partition_weight(partition: List[Set[Hashable]]) -> int:
     sign = (-1) ** (sum(len_lst) - num_partitions)
     value = np.prod([factorial(m - 1) for m in len_lst])
     return sign * value
-
-
-def stirling_number(m: int, k: int) -> int:
-    dp = [[0] * (k + 1) for _ in range(m + 1)]
-    dp[0][0] = 1
-    for i in range(1, m + 1):
-        for j in range(1, k + 1):
-            dp[i][j] = j * dp[i - 1][j] + dp[i - 1][j - 1]
-    return dp[m][k]
-
-
-def bell_number(n):
-    bell = [[0 for _ in range(n + 1)] for _ in range(n + 1)]
-
-    bell[0][0] = 1
-
-    for i in range(1, n + 1):
-        bell[i][0] = bell[i - 1][i - 1]
-
-        for j in range(1, i + 1):
-            bell[i][j] = bell[i - 1][j - 1] + bell[i][j - 1]
-
-    return bell[n][0]

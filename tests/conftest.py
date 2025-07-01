@@ -1,7 +1,7 @@
-import U_stats
+import u_stats
 import pytest
 import random
-from U_stats._utils import einsum_expression_to_mode
+from u_stats._utils import einsum_expression_to_mode
 
 
 @pytest.fixture
