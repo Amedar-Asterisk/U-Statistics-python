@@ -1,3 +1,9 @@
+## 0.6.1 (2025-07-01)
+
+### Fix
+
+- improve error message for complexity calculation in UStats
+
 ## 0.6.0 (2025-07-01)
 
 ### Feat
