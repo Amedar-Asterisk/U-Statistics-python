@@ -32,7 +32,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Citation
+<!-- ## Citation
 
 If you use this package in your research, please consider citing it:
 
@@ -44,4 +44,4 @@ If you use this package in your research, please consider citing it:
   version = {0.7.1},
   year = {2024}
 }
-```
+``` -->
