@@ -271,16 +271,3 @@ pip install -e ".[test]"
 - Follow the existing code style
 
 For questions or discussions, feel free to open an issue or reach out to the maintainers.
-
-<!-- ---
-
-**Citation**: If you use this package in academic work, please cite:
-```bibtex
-@software{ustatistics_python,
-  title={U-Statistics: Efficient Computation of U-statistics and V-statistics},
-  author={Zhang, Ruiqi},
-  url={https://github.com/Amedar-Asterisk/U-Statistics-python},
-  version={0.6.1},
-  year={2024}
-}
-``` -->
