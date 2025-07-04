@@ -22,10 +22,13 @@ Functions:
 
 Supported Backends:
     - **numpy**: CPU-based computation using NumPy arrays
-    - **torch**: GPU/CPU computation using PyTorch tensors with automatic device placement
+    - **torch**: GPU/CPU computation using PyTorch tensors
+                with automatic device placement
 
-The module automatically detects available backends and handles import errors gracefully.
-For PyTorch backend, CUDA acceleration is used when available, falling back to CPU otherwise.
+The module automatically detects available backends and handles
+    import errors gracefully.
+For PyTorch backend, CUDA acceleration is used when available,
+    falling back to CPU otherwise.
 
 Examples
 --------
