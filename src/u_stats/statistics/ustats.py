@@ -269,7 +269,7 @@ class UStats:
 
         Parameters
         ----------
-        tensors : list of np.ndarray
+        tensors : list of np.ndarray or torch.Tensor
             Eeach tensor is the tensorization of the decomposition factors
             of the U-statistic's kernel, as an example, if the kernel
             h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a

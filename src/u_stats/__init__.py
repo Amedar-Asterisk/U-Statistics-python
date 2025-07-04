@@ -2,11 +2,11 @@
 U-Statistics Python Package
 ===========================
 
-A Python package for efficient computation of U-statistics and V-statistics
+A Python package for efficient computation of U-statistics
 via tensor contraction.
 
 This package provides:
-- Efficient computation of U-statistics and V-statistics
+- Efficient computation of U-statistics
 - Support for multiple tensor backends (NumPy and Torch)
 - Both high-level convenience functions and low-level class interfaces
 
@@ -26,7 +26,7 @@ Utilities:
 
 __title__ = "u_stats"
 __version__ = "0.7.0"
-__description__ = "A Python package for efficient computation of U-statistics and V-statistics via tensor contraction."  # noqa: E501
+__description__ = "A Python package for efficient computation of U-statistics via tensor contraction."  # noqa: E501
 __author__ = "Zhang Ruiqi"
 __author_email__ = "zrq1706@outlook.com"
 __license__ = "MIT"
@@ -60,21 +60,23 @@ def vstat(
     V-statistics are generalizations of sample moments that involve averaging
     over all possible combinations of observations.
 
-    Args:
-        tensors: List of input tensors (numpy arrays)
-        expression: Tensor contraction expression. Can be:
+    Parameters:
+        tensors (List[np.ndarray]): List of input tensors (numpy arrays).
+        expression (str | Tuple[Inputs, Outputs] | Inputs): Tensor contraction
+            expression. Can be:
             - String: Einstein summation notation
             - Tuple: (Inputs, Outputs) specification
             - Inputs: Input specification only
-        average: Whether to compute average (True) or sum (False)
-        optimize: Optimization strategy for tensor contraction. Accepts the same
-            values as opt_einsum.contract() including 'greedy', 'optimal', 'dp',
-            'branch-2', 'branch-all', or a custom path specification.
-
-        **kwargs: Additional keyword arguments passed to the computation
+        average (bool, optional): Whether to compute average (True) or sum (False).
+            Defaults to True.
+        optimize (str, optional): Optimization strategy for tensor contraction.
+            Accepts the same values as opt_einsum.contract() including 'greedy',
+            'optimal', 'dp', 'branch-2', 'branch-all', or a custom path
+            specification. Defaults to "greedy".
+        **kwargs: Additional keyword arguments passed to the computation.
 
     Returns:
-        Computed V-statistic value
+        float: Computed V-statistic value.
 
     Example:
         >>> import numpy as np
@@ -102,21 +104,32 @@ def ustat(
     U-statistics are unbiased estimators based on averaging over all possible
     combinations of distinct observations (no replacement).
 
-    Args:
-        tensors: List of input tensors (numpy arrays)
-        expression: Tensor contraction expression. Can be:
+    Parameters:
+        tensors (List[np.ndarray]): List of input tensor with dtype np.ndarray
+            or torch.Tensor. Each tensor is the tensorization of the decomposition
+            factors of the U-statistic's kernel, as an example, if the kernel
+            h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a
+            list of samples from \bbX, then
+                    T^{(k)}_ij = h_k(X_i, X_j),
+            where X_i, X_j is i-th and j-th sample in X.
+        expression (str | Tuple[Inputs, Outputs] | Inputs): The Einstein summation
+            expression defining the U-statistic structure, which define the
+            decomposition form of the U-statistic's kernel. Can be:
             - String: Einstein summation notation
             - Tuple: (Inputs, Outputs) specification
             - Inputs: Input specification only
-        average: Whether to compute average (True) or sum (False)
-        optimize: Optimization strategy for tensor contraction. Accepts the same
-            values as opt_einsum.contract() including 'greedy', 'optimal', 'dp',
-            'branch-2', 'branch-all', or a custom path specification.
-        _dediag: Whether to remove diagonal terms (True by default for U-statistics)
-        **kwargs: Additional keyword arguments passed to the computation
+        average (bool, optional): Whether to compute average (True) or sum (False).
+            Defaults to True.
+        optimize (str, optional): Optimization strategy for tensor contraction.
+            Accepts the same values as opt_einsum.contract() including 'greedy',
+            'optimal', 'dp', 'branch-2', 'branch-all', or a custom path
+            specification. Defaults to "greedy".
+        _dediag (bool, optional): Whether to remove diagonal terms (True by
+            default for U-statistics). Defaults to True.
+        **kwargs: Additional keyword arguments passed to the computation.
 
     Returns:
-        Computed U-statistic value
+        float: Computed U-statistic value.
 
     Example:
         >>> import numpy as np
