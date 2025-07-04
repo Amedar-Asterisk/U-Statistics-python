@@ -455,7 +455,7 @@ class UStats:
         return info.scaling, info.flops, info.largest_intermediate
 
 
-def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> float:
+def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]] | str) -> float:
     """
     Compute U-statistics using explicit loops (reference implementation).
 
@@ -529,6 +529,8 @@ def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> floa
     - Only supports scalar-valued U-statistics
     - No backend support or GPU acceleration
     """
+    if isinstance(expression, str):
+        expression, _ = einsum_eq_to_strlist(expression)
     num_tensors = len(tensors)
     sample_size = tensors[0].shape[0]
     expression = standardize_indices(expression)
