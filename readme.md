@@ -19,12 +19,11 @@ pip install u-stat
 * opt_einsum >= 3.3.0
 * torch (optional, required if using the `torch` backend for GPU or parallel CPU computation)
 
-
 ## Example Usage
 
 The main function is [`ustat`](https://github.com/Amedar-Asterisk/U-Statistics-python/blob/main/src/u_stats/__init__.py#L92-L131), which evaluates U-statistics using an einsum-style interface.
 
-Here’s an example computing a **7th-order U-statistic** with complexity \$O(n^3)\$, where each kernel computation has been preassembled into matrices \$A, B, C, D, E, F \in \mathbb{R}^{n \times n}\$:
+Here’s an example of computing a **7th-order U-statistic** with complexity \(O(n^3)\), assuming that the kernel function values have already been precomputed and assembled into matrices \(A, B, C, D, E, F \in \mathbb{R}^{n \times n}\):
 
 ```math
 U = \frac{1}{n(n-1)\cdots(n-6)} \sum_{1 \leq a \neq b \neq c \neq d \neq e \neq f \neq g \leq n} A_{a,b} B_{b,c} C_{c,d} D_{d,e} E_{e,f} F_{f,g}
