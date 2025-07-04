@@ -1,3 +1,17 @@
+## 0.7.0 (2025-07-04)
+
+### Feat
+
+- enhance pyproject.toml and README for U-Statistics package; add metadata, dependencies, and detailed documentation
+
+### Fix
+
+- convert tensors to backend tensor format in UStats class
+
+### Refactor
+
+- rename calculate methods to compute in UStats and VStats classes
+
 ## 0.6.1 (2025-07-01)
 
 ### Fix
