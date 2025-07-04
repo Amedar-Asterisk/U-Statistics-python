@@ -99,7 +99,7 @@ The expression defines how kernel matrices are connected in the computation. We 
 
 To express the structure of the kernel function $h(x_1, x_2, \dots, x_7) = h_1(x_1, x_2) \cdot h_2(x_2, x_3) \cdots h_{6}(x_{6}, x_7)$, we assign a unique index to each distinct variable $x_1, x_2, \dots, x_7$. For each factor $h_k(x_{k}, x_{k+1})$, we collect the indices of the variables it depends on into a pair. The sequence of pairs is then ordered according to the order of the factors in the product. 
 
-We can using the following notation to represent this structure: 
+We can use the following notation to represent this structure: 
 
 **Einstein Summation Notation:**
 ```python
@@ -114,7 +114,7 @@ expression = [[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]
 **Format Explanation:**
 - In Einstein notation: each letter represents an index, each string like `"ab"` represents a factor of the kernel
 - In list notation: each sub-list `[i,j]` represents a factor of the kernel
-Both formats are equivalent and specify the same computation pattern.
+Both formats are equivalent and specify the same computation pattern in our package
 
 #### 3.2.3 Complete Example
 
