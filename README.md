@@ -11,6 +11,7 @@ A Python package for efficient computation of U-statistics and V-statistics via 
 - Support for multiple tensor backends (NumPy and PyTorch)
 - Both high-level convenience functions and low-level class interfaces
 - Optimized tensor operations using `opt_einsum`
+- hhhh
 
 ## Installation
 
