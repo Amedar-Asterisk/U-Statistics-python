@@ -17,9 +17,9 @@ This package provides a high-performance, tensor-based implementation for comput
 2. [Requirements](#2-requirements)
 3. [Example Usage](#3-example-usage)
 4. [API Reference](#4-api-reference)
-5. [Changelog](#7-changelog)
-6. [License](#8-license)
-7. [Contributing](#9-contributing) 
+5. [Changelog](#5-changelog)
+6. [License](#6-license)
+7. [Contributing](#7-contributing) 
 
 ## 1. Installation
 
