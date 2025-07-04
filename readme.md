@@ -77,8 +77,13 @@ $$
 h(x_1,x_2,\dots,x_7) = h_1(x_1, x_2) h_2(x_2, x_3) \dots h_6(x_6, x_7)
 $$
 
-as an example. For samples $X = (X_1, \dots, X_n)$, the U-statistic takes the form $
-U = \frac{1}{\prod_{k=0}^{6} (n - k)} \sum_{(i_1,\dots,i_7) \in \mathcal{P}_7} \prod_{k=1}^{6} h_k[i_k,\, i_{k+1}]$, where $\mathcal{P}_7$ denotes all 7-tuples of distinct indices.
+as an example. For samples $X = (X_1, \dots, X_n)$, the U-statistic takes the form 
+
+$$
+U = \frac{1}{n(n-1)\cdots (n-6)} \sum_{(i_1,\dots,i_7) \in \mathcal{P}_7} \prod_{k=1}^{6} h_k[i_k,\, i_{k+1}]
+$$
+
+where $\mathcal{P}_7$ denotes all 7-tuples of distinct indices.
 
 #### 3.2.1 Tensor Assembly
 
