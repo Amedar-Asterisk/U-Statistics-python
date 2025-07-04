@@ -25,7 +25,7 @@ Utilities:
 """
 
 __title__ = "u_stats"
-__version__ = "0.7.2"
+__version__ = "0.7.3"
 __description__ = "A Python package for efficient computation of U-statistics via tensor contraction."  # noqa: E501
 __author__ = "Zhang Ruiqi"
 __author_email__ = "zrq1706@outlook.com"
