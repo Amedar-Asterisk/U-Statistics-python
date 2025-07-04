@@ -1,3 +1,11 @@
+## 0.7.3 (2025-07-04)
+
+### Fix
+
+- allow string input for expression parameter in U_stats_loop function
+- improve formatting and readability of backend documentation in _backend.py
+- update citation section in README.md to be commented out and adjust version reference format in pyproject.toml
+
 ## 0.7.2 (2025-07-04)
 
 ### Fix
