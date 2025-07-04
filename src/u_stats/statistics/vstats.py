@@ -247,7 +247,7 @@ class VStats:
 
         Parameters
         ----------
-        tensors : list of np.ndarray
+        tensors : list of np.ndarray or torch.Tensor
             Input tensors for the V-statistic computation. Each tensor represents
             the tensorization of factors in the V-statistic's kernel. For example,
             if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
@@ -292,7 +292,6 @@ class VStats:
         The V-statistic computation follows these steps:
 
         1. **Direct Summation**: Apply Einstein summation directly to input tensors
-        2. **No Dediagonalization**: Include all terms, including diagonal elements
         3. **Normalization**: If average=True, divide by n^k where n is sample size
            and k is the order
 
@@ -320,8 +319,11 @@ class VStats:
 
         Parameters
         ----------
-        tensors : list of np.ndarray
-            Input tensors for the V-statistic computation.
+        tensors : list of np.ndarray or torch.Tensor
+            Input tensors for the V-statistic computation. Each tensor represents
+            the tensorization of factors in the V-statistic's kernel. For example,
+            if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
+            X^d, then T^{(k)}_{i1,i2,...,id} = h_k(X_{i1}, X_{i2}, ..., X_{id}).
         average : bool, default=True
             Whether to return the averaged V-statistic.
         **kwargs

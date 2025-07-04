@@ -55,34 +55,50 @@ def vstat(
     **kwargs,
 ) -> float:
     """
-    Compute V-statistics from input tensors.
+    Compute the V-statistic on input tensors and corresponding expression.
 
-    V-statistics are generalizations of sample moments that involve averaging
-    over all possible combinations of observations.
+    This function performs direct Einstein summation to compute the V-statistic.
 
-    Parameters:
-        tensors (List[np.ndarray]): List of input tensors (numpy arrays).
-        expression (str | Tuple[Inputs, Outputs] | Inputs): Tensor contraction
-            expression. Can be:
-            - String: Einstein summation notation
-            - Tuple: (Inputs, Outputs) specification
-            - Inputs: Input specification only
-        average (bool, optional): Whether to compute average (True) or sum (False).
-            Defaults to True.
-        optimize (str, optional): Optimization strategy for tensor contraction.
-            Accepts the same values as opt_einsum.contract() including 'greedy',
-            'optimal', 'dp', 'branch-2', 'branch-all', or a custom path
-            specification. Defaults to "greedy".
-        **kwargs: Additional keyword arguments passed to the computation.
+    Parameters
+    ----------
+    tensors : list of np.ndarray
+        Input tensors for the V-statistic computation. Each tensor represents
+        the tensorization of factors in the V-statistic's kernel. For example,
+        if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
+        X^d, then T^{(k)}_{i1,i2,...,id} = h_k(X_{i1}, X_{i2}, ..., X_{id}).
+    expression : str or tuple or list
+        The Einstein summation expression defining the U-statistic structure,
+        which define the decomposition form of the U-statistic's kernel
 
-    Returns:
-        float: Computed V-statistic value.
+        Supported formats:
+        - **String**: Einstein notation (e.g., 'ij,jk->', 'ab,bc,ca->')
+        - **Tuple**: (inputs, outputs) where:
+            - inputs: sequence of sequences of hashable indices
+            - outputs: sequence of hashable output indices
+        - **List**: input indices only (output defaults to scalar)
+    average : bool, default=True
+        Whether to return the averaged V-statistic. If False, returns
+        the unscaled sum over all valid index combinations.
+    optimize : str, default='greedy'
+        Optimization strategy for the einsum contraction path.
+        Options include 'greedy', 'optimal', 'dp', 'auto', etc,
+        with is the same as the `optimize` parameter in `opt_einsum.contract`.
+    **kwargs
+        Additional keyword arguments passed to the backend's einsum function.
+        Common options include 'optimize' for path optimization strategy.
+
+    Returns
+    -------
+    float or np.ndarray
+        The computed V-statistic value:
+        - **float**: For scalar V-statistics (no output indices)
+        - **np.ndarray**: For tensor-valued V-statistics (with output indices)
 
     Example:
         >>> import numpy as np
         >>> from u_stats import vstat
-        >>> x = np.random.randn(100, 5)
-        >>> y = np.random.randn(100, 5)
+        >>> x = np.random.randn(100, 100)
+        >>> y = np.random.randn(100, 100)
         >>> result = vstat([x, y], "ij,ij->")
     """
     return VStats(expression=expression).compute(
@@ -99,43 +115,54 @@ def ustat(
     **kwargs,
 ) -> float:
     """
-    Compute U-statistics from input tensors.
+    Compute the U-statistic on input tensors and corresponding expression.
 
-    U-statistics are unbiased estimators based on averaging over all possible
-    combinations of distinct observations (no replacement).
+    Parameters
+    ----------
+    tensors : list of np.ndarray or torch.Tensor
+        Input tensors for the V-statistic computation. Each tensor represents
+        the tensorization of factors in the V-statistic's kernel. For example,
+        if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
+        X^d, then T^{(k)}_{i1,i2,...,id} = h_k(X_{i1}, X_{i2}, ..., X_{id}).
+    expression : str or tuple or list
+        The Einstein summation expression defining the U-statistic structure,
+        which define the decomposition form of the U-statistic's kernel
 
-    Parameters:
-        tensors (List[np.ndarray]): List of input tensor with dtype np.ndarray
-            or torch.Tensor. Each tensor is the tensorization of the decomposition
-            factors of the U-statistic's kernel, as an example, if the kernel
-            h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a
-            list of samples from \bbX, then
-                    T^{(k)}_ij = h_k(X_i, X_j),
-            where X_i, X_j is i-th and j-th sample in X.
-        expression (str | Tuple[Inputs, Outputs] | Inputs): The Einstein summation
-            expression defining the U-statistic structure, which define the
-            decomposition form of the U-statistic's kernel. Can be:
-            - String: Einstein summation notation
-            - Tuple: (Inputs, Outputs) specification
-            - Inputs: Input specification only
-        average (bool, optional): Whether to compute average (True) or sum (False).
-            Defaults to True.
-        optimize (str, optional): Optimization strategy for tensor contraction.
-            Accepts the same values as opt_einsum.contract() including 'greedy',
-            'optimal', 'dp', 'branch-2', 'branch-all', or a custom path
-            specification. Defaults to "greedy".
-        _dediag (bool, optional): Whether to remove diagonal terms (True by
-            default for U-statistics). Defaults to True.
-        **kwargs: Additional keyword arguments passed to the computation.
+        Supported formats:
+        - **String**: Einstein notation (e.g., 'ij,jk->', 'ab,bc,ca->')
+        - **Tuple**: (inputs, outputs) where:
+            - inputs: sequence of sequences of hashable indices
+            - outputs: sequence of hashable output indices
+        - **List**: input indices only (output defaults to scalar)
+    average : bool, default=True
+        Whether to return the averaged U-statistic. If False, returns
+        the unscaled sum over all valid index combinations.
+    optimize : str, default='greedy'
+        Optimization strategy for the einsum contraction path.
+        Options include 'greedy', 'optimal', 'dp', 'auto', etc,
+        with is the same as the `optimize` parameter in `opt_einsum.contract`.
+    _dediag : bool, default=True
+        Whether to apply dediagonalization (exclude diagonal terms).
+        Automatically disabled for tensor-valued U-statistics.
+        Setting to False computes V-statistics instead.
+    **kwargs
+        Additional keyword arguments passed to opt_einsum.contract().
+        Common options include 'optimize' for path optimization strategy.
+        ""optimize" can be 'greedy', 'optimal', 'dp', "auto", etc.
 
-    Returns:
-        float: Computed U-statistic value.
+    Returns
+    -------
+    float or np.ndarray
+        The computed U-statistic value:
+        - **float**: For scalar U-statistics (no output indices)
+        - **np.ndarray**: For tensor-valued U-statistics (with output indices)
+        (under testing)
 
     Example:
         >>> import numpy as np
         >>> from u_stats import ustat
-        >>> x = np.random.randn(100, 5)
-        >>> y = np.random.randn(100, 5)
+        >>> x = np.random.randn(100, 100)
+        >>> y = np.random.randn(100, 100)
         >>> result = ustat([x, y], "ij,ij->")
     """
     return UStats(expression=expression).compute(

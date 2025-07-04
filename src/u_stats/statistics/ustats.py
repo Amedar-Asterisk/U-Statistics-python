@@ -270,12 +270,10 @@ class UStats:
         Parameters
         ----------
         tensors : list of np.ndarray or torch.Tensor
-            Eeach tensor is the tensorization of the decomposition factors
-            of the U-statistic's kernel, as an example, if the kernel
-            h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a
-            list of samples from \bbX, then
-                    T^{(k)}_ij = h_k(X_i, X_j),
-            where X_i, X_j is i-th and j-th sample in X.
+            Input tensors for the V-statistic computation. Each tensor represents
+            the tensorization of factors in the V-statistic's kernel. For example,
+            if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
+            X^d, then T^{(k)}_{i1,i2,...,id} = h_k(X_{i1}, X_{i2}, ..., X_{id}).
         average : bool, default=True
             Whether to return the averaged U-statistic. If False, returns
             the unscaled sum over all valid index combinations.
@@ -341,14 +339,11 @@ class UStats:
 
         Parameters
         ----------
-        tensors : list of np.ndarray
-            tensors : list of np.ndarray
-            Eeach tensor is the tensorization of the decomposition factors
-            of the U-statistic's kernel, as an example, if the kernel
-            h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a
-            list of samples from \bbX, then
-                    T^{(k)}_ij = h_k(X_i, X_j),
-            where X_i, X_j is i-th and j-th sample in X.
+        tensors : list of np.ndarray or torch.Tensor
+            Input tensors for the V-statistic computation. Each tensor represents
+            the tensorization of factors in the V-statistic's kernel. For example,
+            if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
+            X^d, then T^{(k)}_{i1,i2,...,id} = h_k(X_{i1}, X_{i2}, ..., X_{id}).
         average : bool, default=True
             Whether to return the averaged U-statistic. If False, returns
             the unscaled sum over all valid index combinations.
