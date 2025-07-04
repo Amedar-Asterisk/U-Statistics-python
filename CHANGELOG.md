@@ -1,3 +1,9 @@
+## 0.7.5 (2025-07-04)
+
+### Fix
+
+- rename U_stats_loop to u_stats_loop for consistency
+
 ## 0.7.4 (2025-07-04)
 
 ### Fix
