@@ -52,13 +52,14 @@ class UStats:
 
     U-statistics are unbiased estimators that generalize sample means to functions
     of multiple observations. This class provides an efficient tensor-based
-    implementation that avoids explicit loops and supports arbitrary order
-    U-statistics with flexible expression formats.
+    implementation that avoids explicit loops and theoretically supports arbitrary 
+    order U-statistics with flexible expression formats.
 
     Parameters
     ----------
     expression : str or tuple or list
-        The Einstein summation expression defining the U-statistic structure.
+        The Einstein summation expression defining the U-statistic structure, 
+        which define the decomposition form of the U-statistic's kernel
         Supported formats:
 
         - **String**: Einstein notation (e.g., 'ij,jk->', 'ab,bc,ca->')
@@ -109,10 +110,8 @@ class UStats:
 
     1. **Tensor Decomposition**: Decomposes U-statistics into weighted
        subexpressions based on index partitions
-    2. **Dediagonalization**: Automatically removes diagonal terms to ensure
-       sampling without replacement
-    3. **Backend Support**: Works with NumPy and PyTorch tensors
-    4. **Optimization**: Leverages opt_einsum for efficient contraction paths
+    2. **Backend Support**: Works with NumPy and PyTorch tensors
+    3. **Optimization**: Leverages opt_einsum for efficient contraction paths
     """
 
     def __init__(self, expression: str | Tuple[Inputs, Outputs] | Inputs):
@@ -140,7 +139,8 @@ class UStats:
     @property
     def expression(self) -> str:
         """
-        The Einstein summation expression of the U-statistic.
+        The Einstein summation expression of the U-statistic's
+        decomposition form.
 
         Returns
         -------
@@ -270,9 +270,12 @@ class UStats:
         Parameters
         ----------
         tensors : list of np.ndarray
-            Input tensors for computation. The first dimension of each tensor
-            must correspond to the sample size (all tensors must have the same
-            sample size along this dimension).
+            Eeach tensor is the tensorization of the decomposition factors
+            of the U-statistic's kernel, as an example, if the kernel
+            h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a
+            list of samples from \bbX, then
+                    T^{(k)}_ij = h_k(X_i, X_j),
+            where X_i, X_j is i-th and j-th sample in X. 
         average : bool, default=True
             Whether to return the averaged U-statistic. If False, returns
             the unscaled sum over all valid index combinations.
@@ -291,12 +294,7 @@ class UStats:
             The computed U-statistic value:
             - **float**: For scalar U-statistics (no output indices)
             - **np.ndarray**: For tensor-valued U-statistics (with output indices)
-
-        Raises
-        ------
-        ValueError
-            If tensors have incompatible shapes or if the sample size is too small
-            for the requested U-statistic order.
+                              (under testing)
         """
         backend = get_backend()
 
@@ -344,9 +342,13 @@ class UStats:
         Parameters
         ----------
         tensors : list of np.ndarray
-            Input tensors for computation. The first dimension of each tensor
-            must correspond to the sample size (all tensors must have the same
-            sample size along this dimension).
+            tensors : list of np.ndarray
+            Eeach tensor is the tensorization of the decomposition factors
+            of the U-statistic's kernel, as an example, if the kernel
+            h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a
+            list of samples from \bbX, then
+                    T^{(k)}_ij = h_k(X_i, X_j),
+            where X_i, X_j is i-th and j-th sample in X.
         average : bool, default=True
             Whether to return the averaged U-statistic. If False, returns
             the unscaled sum over all valid index combinations.
