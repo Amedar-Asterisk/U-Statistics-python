@@ -85,7 +85,7 @@ class UStats:
     >>> ustat = UStats('ij,ji->')
     >>> tensor1 = np.random.randn(100, 100)
     >>> tensor2 = np.random.randn(100, 100)
-    >>> result = ustat.calculate([tensor1, tensor2])
+    >>> result = ustat.compute([tensor1, tensor2])
     >>> print(f"U-statistic: {result:.4f}")
 
     Using tuple notation for more complex expressions:
@@ -101,7 +101,7 @@ class UStats:
     >>> # Three-way interaction U-statistic
     >>> ustat3 = UStats('abc,bca,cab->')
     >>> tensors = [np.random.randn(50, 50, 50) for _ in range(3)]
-    >>> result = ustat3.calculate(tensors)
+    >>> result = ustat3.compute(tensors)
 
     Notes
     -----
@@ -257,7 +257,7 @@ class UStats:
 
         return weight, subexpression
 
-    def calculate(
+    def compute(
         self,
         tensors: List[np.ndarray],
         average: bool = True,
@@ -265,7 +265,7 @@ class UStats:
         **kwargs,
     ) -> float | np.ndarray:
         """
-        Calculate the U-statistic from input tensors.
+        compute the U-statistic from input tensors.
 
         Parameters
         ----------
@@ -339,7 +339,7 @@ class UStats:
 
     def __call__(self, *args, **kwargs):
         """
-        Calculate the U-statistic from input tensors.
+        Compute the U-statistic from input tensors.
 
         Parameters
         ----------
@@ -372,7 +372,7 @@ class UStats:
             If tensors have incompatible shapes or if the sample size is too small
             for the requested U-statistic order.
         """
-        return self.calculate(*args, **kwargs)
+        return self.compute(*args, **kwargs)
 
     def complexity(
         self, optimize: str = "greedy", n: int = 10**3, _dediag: bool = True, **kwargs
@@ -502,7 +502,7 @@ def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> floa
     Compare with tensor-based method:
 
     >>> ustat = UStats('ij,ji->')
-    >>> tensor_result = ustat.calculate([X, Y])
+    >>> tensor_result = ustat.compute([X, Y])
     >>> print(f"Tensor-based result: {tensor_result:.6f}")
     >>> print(f"Difference: {abs(result - tensor_result):.2e}")
 

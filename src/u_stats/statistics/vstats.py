@@ -65,7 +65,7 @@ class VStats:
                 if pos != -1:
                     return (i, pos)
 
-    def calculate(
+    def compute(
         self, tensors: List[np.ndarray], average: bool = True, **kwargs
     ) -> float | np.ndarray:
         backend = get_backend()

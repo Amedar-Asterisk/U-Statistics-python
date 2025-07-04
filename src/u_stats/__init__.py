@@ -84,7 +84,7 @@ def vstat(
         >>> y = np.random.randn(100, 5)
         >>> result = vstat([x, y], "ij,ij->")
     """
-    return VStats(expression=expression).calculate(
+    return VStats(expression=expression).compute(
         tensors=tensors, average=average, optimize=optimize, **kwargs
     )
 
@@ -126,6 +126,6 @@ def ustat(
         >>> y = np.random.randn(100, 5)
         >>> result = ustat([x, y], "ij,ij->")
     """
-    return UStats(expression=expression).calculate(
+    return UStats(expression=expression).compute(
         tensors=tensors, average=average, optimize=optimize, _dediag=_dediag, **kwargs
     )
