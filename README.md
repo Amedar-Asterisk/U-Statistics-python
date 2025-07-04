@@ -17,9 +17,9 @@ This package provides a high-performance, tensor-based implementation for comput
 2. [Requirements](#2-requirements)
 3. [Example Usage](#3-example-usage)
 4. [API Reference](#4-api-reference)
-5. [Changelog](#7-changelog)
-6. [License](#8-license)
-7. [Contributing](#9-contributing) 
+5. [Changelog](#5-changelog)
+6. [License](#6-license)
+7. [Contributing](#7-contributing) 
 
 ## 1. Installation
 
@@ -271,16 +271,3 @@ pip install -e ".[test]"
 - Follow the existing code style
 
 For questions or discussions, feel free to open an issue or reach out to the maintainers.
-
-<!-- ---
-
-**Citation**: If you use this package in academic work, please cite:
-```bibtex
-@software{ustatistics_python,
-  title={U-Statistics: Efficient Computation of U-statistics and V-statistics},
-  author={Zhang, Ruiqi},
-  url={https://github.com/Amedar-Asterisk/U-Statistics-python},
-  version={0.6.1},
-  year={2024}
-}
-``` -->
