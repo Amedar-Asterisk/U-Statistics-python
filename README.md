@@ -41,7 +41,7 @@ If you use this package in your research, please consider citing it:
   author = {Zhang, Ruiqi},
   title = {U-Statistics Python Package},
   url = {https://github.com/zrq/U-Statistics-python},
-  version = {0.6.1},
+  version = {0.7.0},
   year = {2024}
 }
 ```
