@@ -4,6 +4,18 @@
 
 - update version reference format in README.md for consistency
 
+### Enhance
+
+- Updated docstrings in _convert.py to provide clearer descriptions of conversion utilities, including examples and usage notes for functions like numbers_to_letters, standardize_indices, strlist_to_einsum_eq, and einsum_eq_to_strlist.
+- Improved parameter descriptions in UStats and VStats classes to clarify input tensor requirements, emphasizing compatibility with both np.ndarray and torch.Tensor.
+- Removed redundant comments and ensured consistency in terminology across the documentation.
+
+### feat
+- improve conversion utilities with detailed docstrings and examples
+
+### refactor: 
+- update UStats class parameter type to include torch.Tensor
+
 ## 0.7.0 (2025-07-04)
 
 ### Feat

@@ -37,11 +37,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 If you use this package in your research, please consider citing it:
 
 ```bibtex
-@software{u_stats_python,
-  author = {Zhang, Ruiqi},
+@software{u-stats,
+  author = {Zhang, Ruiqi and Chen, Xingyu},
   title = {U-Statistics Python Package},
-  url = {https://github.com/zrq/U-Statistics-python},
-  version = {0.7.0},
+  url = {https://github.com/Amedar-Asterisk/U-Statistics-python},
+  version = {0.7.1},
   year = {2024}
 }
 ```
