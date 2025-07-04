@@ -52,16 +52,16 @@ class UStats:
 
     U-statistics are unbiased estimators that generalize sample means to functions
     of multiple observations. This class provides an efficient tensor-based
-    implementation that avoids explicit loops and theoretically supports arbitrary 
+    implementation that avoids explicit loops and theoretically supports arbitrary
     order U-statistics with flexible expression formats.
 
     Parameters
     ----------
     expression : str or tuple or list
-        The Einstein summation expression defining the U-statistic structure, 
+        The Einstein summation expression defining the U-statistic structure,
         which define the decomposition form of the U-statistic's kernel
-        Supported formats:
 
+        Supported formats:
         - **String**: Einstein notation (e.g., 'ij,jk->', 'ab,bc,ca->')
         - **Tuple**: (inputs, outputs) where:
             - inputs: sequence of sequences of hashable indices
@@ -73,7 +73,7 @@ class UStats:
     expression : str
         The Einstein summation expression used for computation.
     order : int
-        The order of the U-statistic (number of contracted indices).
+        The order of the U-statistic.
 
     Examples
     --------
@@ -186,7 +186,7 @@ class UStats:
                 if pos != -1:
                     return (i, pos)
 
-    def _get_all_subexpressions(
+    def get_all_subexpressions(
         self, dediag: bool = True
     ) -> Generator[Tuple[float, str], None, None]:
         """
@@ -265,7 +265,7 @@ class UStats:
         **kwargs,
     ) -> float | np.ndarray:
         """
-        compute the U-statistic from input tensors.
+        Compute the U-statistic on input tensors.
 
         Parameters
         ----------
@@ -275,7 +275,7 @@ class UStats:
             h = h_1 h_2 ... h_K and all h_k is defined on \bbX^2, X is a
             list of samples from \bbX, then
                     T^{(k)}_ij = h_k(X_i, X_j),
-            where X_i, X_j is i-th and j-th sample in X. 
+            where X_i, X_j is i-th and j-th sample in X.
         average : bool, default=True
             Whether to return the averaged U-statistic. If False, returns
             the unscaled sum over all valid index combinations.
@@ -315,7 +315,7 @@ class UStats:
 
         # Compute weighted sum of subexpressions
         result = None
-        subexpressions = self._get_all_subexpressions(dediag=_dediag)
+        subexpressions = self.get_all_subexpressions(dediag=_dediag)
 
         for weight, subexpression in subexpressions:
             subresult = backend.einsum(subexpression, *tensors, **kwargs)
@@ -367,6 +367,7 @@ class UStats:
             The computed U-statistic value:
             - **float**: For scalar U-statistics (no output indices)
             - **np.ndarray**: For tensor-valued U-statistics (with output indices)
+            (under testing)
 
         Raises
         ------
@@ -432,7 +433,6 @@ class UStats:
         -----
         The complexity analysis:
         - Considers all subexpressions in the U-statistic decomposition
-        - Uses opt_einsum to find efficient contraction paths
         - Reports the worst-case metrics across all subexpressions
         - Helps in choosing appropriate optimization strategies
         """
@@ -447,7 +447,7 @@ class UStats:
         info = ComplexityInfo()
 
         # Analyze each subexpression
-        subexpressions = self._get_all_subexpressions(dediag=_dediag)
+        subexpressions = self.get_all_subexpressions(dediag=_dediag)
         for _, subexpression in subexpressions:
             _, path_info = oe.contract_path(
                 subexpression, *shapes, optimize=optimize, shapes=True, **kwargs

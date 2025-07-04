@@ -7,8 +7,7 @@ via tensor contraction.
 
 This package provides:
 - Efficient computation of U-statistics and V-statistics
-- Support for multiple tensor backends (NumPy, etc.)
-- Optimized tensor contraction algorithms
+- Support for multiple tensor backends (NumPy and Torch)
 - Both high-level convenience functions and low-level class interfaces
 
 Main Functions:
