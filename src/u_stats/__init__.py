@@ -25,7 +25,7 @@ Utilities:
 """
 
 __title__ = "u_stats"
-__version__ = "0.7.4"
+__version__ = "0.7.5"
 __description__ = "A Python package for efficient computation of U-statistics via tensor contraction."  # noqa: E501
 __author__ = "Zhang Ruiqi"
 __author_email__ = "zrq1706@outlook.com"
@@ -40,7 +40,7 @@ __all__ = [
     "set_backend",
     "get_backend",
 ]
-from .statistics import UStats, VStats, U_stats_loop
+from .statistics import UStats, VStats, u_stats_loop
 from ._utils import set_backend, Backend, get_backend
 from typing import List, Tuple
 from ._utils import Inputs, Outputs

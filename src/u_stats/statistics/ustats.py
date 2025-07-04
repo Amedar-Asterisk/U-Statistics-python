@@ -42,7 +42,7 @@ import opt_einsum as oe
 
 __all__ = [
     "UStats",
-    "U_stats_loop",
+    "u_stats_loop",
 ]
 
 
@@ -455,7 +455,7 @@ class UStats:
         return info.scaling, info.flops, info.largest_intermediate
 
 
-def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]] | str) -> float:
+def u_stats_loop(tensors: List[np.ndarray], expression: List[List[int]] | str) -> float:
     """
     Compute U-statistics using explicit loops (reference implementation).
 

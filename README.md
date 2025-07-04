@@ -231,7 +231,7 @@ Class-based interface for V-statistics computation with advanced features.
 
 **Parameters and Methods:** Same as `UStats`
 
-#### `U_stats_loop(expression)`
+#### `u_stats_loop(tensors, expression)`
 Reference implementation using explicit loops (for validation and small computations).
 
 **Note:** This class is primarily for testing and educational purposes. Use `UStats` for production code.
