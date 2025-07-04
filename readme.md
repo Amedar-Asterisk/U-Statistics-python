@@ -41,7 +41,7 @@ The einsum expression corresponding to this example is:
 expression = "ab,bc,cd,de,ef,fg->"
 ```
 
-This follows standard Einstein summation rules: all indices on the left-hand side are summed out if they do not appear on the right. In the context of U-statistics, we restrict the summation to distinct tuples $(a, b, \dots, g)$.
+This follows standard Einstein summation rules: each comma-separated term corresponds to a tensor and its indexing pattern. The subscripts specify how the dimensions align across tensors. All indices on the left-hand side that do not appear on the right-hand side are summed over. In our case, this means summing over all index tuples $(a, b, \dots, g)$. In the context of U-statistics, this summation is restricted to distinct tuples, i.e., $a \ne b \ne \dots \ne g$.
 
 ```python
 from u_stats import ustat, set_backend
