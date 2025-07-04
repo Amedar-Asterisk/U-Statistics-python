@@ -1,3 +1,9 @@
+## 0.7.1 (2025-07-04)
+
+### Fix
+
+- update version reference format in README.md for consistency
+
 ## 0.7.0 (2025-07-04)
 
 ### Feat
