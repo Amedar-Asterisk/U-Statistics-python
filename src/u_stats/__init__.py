@@ -40,7 +40,7 @@ __all__ = [
     "set_backend",
     "get_backend",
 ]
-from .statistics import UStats, VStats, U_stats_loop
+from .statistics import UStats, VStats, u_stats_loop
 from ._utils import set_backend, Backend, get_backend
 from typing import List, Tuple
 from ._utils import Inputs, Outputs
