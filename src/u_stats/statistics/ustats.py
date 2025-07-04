@@ -52,15 +52,16 @@ class UStats:
 
     U-statistics are unbiased estimators that generalize sample means to functions
     of multiple observations. This class provides an efficient tensor-based
-    implementation that avoids explicit loops and supports arbitrary order
-    U-statistics with flexible expression formats.
+    implementation that avoids explicit loops and theoretically supports arbitrary
+    order U-statistics with flexible expression formats.
 
     Parameters
     ----------
     expression : str or tuple or list
-        The Einstein summation expression defining the U-statistic structure.
-        Supported formats:
+        The Einstein summation expression defining the U-statistic structure,
+        which define the decomposition form of the U-statistic's kernel
 
+        Supported formats:
         - **String**: Einstein notation (e.g., 'ij,jk->', 'ab,bc,ca->')
         - **Tuple**: (inputs, outputs) where:
             - inputs: sequence of sequences of hashable indices
@@ -72,7 +73,7 @@ class UStats:
     expression : str
         The Einstein summation expression used for computation.
     order : int
-        The order of the U-statistic (number of contracted indices).
+        The order of the U-statistic.
 
     Examples
     --------
@@ -85,7 +86,7 @@ class UStats:
     >>> ustat = UStats('ij,ji->')
     >>> tensor1 = np.random.randn(100, 100)
     >>> tensor2 = np.random.randn(100, 100)
-    >>> result = ustat.calculate([tensor1, tensor2])
+    >>> result = ustat.compute([tensor1, tensor2])
     >>> print(f"U-statistic: {result:.4f}")
 
     Using tuple notation for more complex expressions:
@@ -101,7 +102,7 @@ class UStats:
     >>> # Three-way interaction U-statistic
     >>> ustat3 = UStats('abc,bca,cab->')
     >>> tensors = [np.random.randn(50, 50, 50) for _ in range(3)]
-    >>> result = ustat3.calculate(tensors)
+    >>> result = ustat3.compute(tensors)
 
     Notes
     -----
@@ -109,10 +110,8 @@ class UStats:
 
     1. **Tensor Decomposition**: Decomposes U-statistics into weighted
        subexpressions based on index partitions
-    2. **Dediagonalization**: Automatically removes diagonal terms to ensure
-       sampling without replacement
-    3. **Backend Support**: Works with NumPy and PyTorch tensors
-    4. **Optimization**: Leverages opt_einsum for efficient contraction paths
+    2. **Backend Support**: Works with NumPy and PyTorch tensors
+    3. **Optimization**: Leverages opt_einsum for efficient contraction paths
     """
 
     def __init__(self, expression: str | Tuple[Inputs, Outputs] | Inputs):
@@ -140,7 +139,8 @@ class UStats:
     @property
     def expression(self) -> str:
         """
-        The Einstein summation expression of the U-statistic.
+        The Einstein summation expression of the U-statistic's
+        decomposition form.
 
         Returns
         -------
@@ -186,7 +186,7 @@ class UStats:
                 if pos != -1:
                     return (i, pos)
 
-    def _get_all_subexpressions(
+    def get_all_subexpressions(
         self, dediag: bool = True
     ) -> Generator[Tuple[float, str], None, None]:
         """
@@ -257,7 +257,7 @@ class UStats:
 
         return weight, subexpression
 
-    def calculate(
+    def compute(
         self,
         tensors: List[np.ndarray],
         average: bool = True,
@@ -265,14 +265,15 @@ class UStats:
         **kwargs,
     ) -> float | np.ndarray:
         """
-        Calculate the U-statistic from input tensors.
+        Compute the U-statistic on input tensors.
 
         Parameters
         ----------
-        tensors : list of np.ndarray
-            Input tensors for computation. The first dimension of each tensor
-            must correspond to the sample size (all tensors must have the same
-            sample size along this dimension).
+        tensors : list of np.ndarray or torch.Tensor
+            Input tensors for the V-statistic computation. Each tensor represents
+            the tensorization of factors in the V-statistic's kernel. For example,
+            if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
+            X^d, then T^{(k)}_{i1,i2,...,id} = h_k(X_{i1}, X_{i2}, ..., X_{id}).
         average : bool, default=True
             Whether to return the averaged U-statistic. If False, returns
             the unscaled sum over all valid index combinations.
@@ -291,12 +292,7 @@ class UStats:
             The computed U-statistic value:
             - **float**: For scalar U-statistics (no output indices)
             - **np.ndarray**: For tensor-valued U-statistics (with output indices)
-
-        Raises
-        ------
-        ValueError
-            If tensors have incompatible shapes or if the sample size is too small
-            for the requested U-statistic order.
+                              (under testing)
         """
         backend = get_backend()
 
@@ -317,7 +313,7 @@ class UStats:
 
         # Compute weighted sum of subexpressions
         result = None
-        subexpressions = self._get_all_subexpressions(dediag=_dediag)
+        subexpressions = self.get_all_subexpressions(dediag=_dediag)
 
         for weight, subexpression in subexpressions:
             subresult = backend.einsum(subexpression, *tensors, **kwargs)
@@ -339,14 +335,15 @@ class UStats:
 
     def __call__(self, *args, **kwargs):
         """
-        Calculate the U-statistic from input tensors.
+        Compute the U-statistic from input tensors.
 
         Parameters
         ----------
-        tensors : list of np.ndarray
-            Input tensors for computation. The first dimension of each tensor
-            must correspond to the sample size (all tensors must have the same
-            sample size along this dimension).
+        tensors : list of np.ndarray or torch.Tensor
+            Input tensors for the V-statistic computation. Each tensor represents
+            the tensorization of factors in the V-statistic's kernel. For example,
+            if the kernel h = h_1 * h_2 * ... * h_K and each h_k is defined on
+            X^d, then T^{(k)}_{i1,i2,...,id} = h_k(X_{i1}, X_{i2}, ..., X_{id}).
         average : bool, default=True
             Whether to return the averaged U-statistic. If False, returns
             the unscaled sum over all valid index combinations.
@@ -365,6 +362,7 @@ class UStats:
             The computed U-statistic value:
             - **float**: For scalar U-statistics (no output indices)
             - **np.ndarray**: For tensor-valued U-statistics (with output indices)
+            (under testing)
 
         Raises
         ------
@@ -372,7 +370,7 @@ class UStats:
             If tensors have incompatible shapes or if the sample size is too small
             for the requested U-statistic order.
         """
-        return self.calculate(*args, **kwargs)
+        return self.compute(*args, **kwargs)
 
     def complexity(
         self, optimize: str = "greedy", n: int = 10**3, _dediag: bool = True, **kwargs
@@ -430,7 +428,6 @@ class UStats:
         -----
         The complexity analysis:
         - Considers all subexpressions in the U-statistic decomposition
-        - Uses opt_einsum to find efficient contraction paths
         - Reports the worst-case metrics across all subexpressions
         - Helps in choosing appropriate optimization strategies
         """
@@ -445,7 +442,7 @@ class UStats:
         info = ComplexityInfo()
 
         # Analyze each subexpression
-        subexpressions = self._get_all_subexpressions(dediag=_dediag)
+        subexpressions = self.get_all_subexpressions(dediag=_dediag)
         for _, subexpression in subexpressions:
             _, path_info = oe.contract_path(
                 subexpression, *shapes, optimize=optimize, shapes=True, **kwargs
@@ -458,7 +455,7 @@ class UStats:
         return info.scaling, info.flops, info.largest_intermediate
 
 
-def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> float:
+def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]] | str) -> float:
     """
     Compute U-statistics using explicit loops (reference implementation).
 
@@ -502,7 +499,7 @@ def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> floa
     Compare with tensor-based method:
 
     >>> ustat = UStats('ij,ji->')
-    >>> tensor_result = ustat.calculate([X, Y])
+    >>> tensor_result = ustat.compute([X, Y])
     >>> print(f"Tensor-based result: {tensor_result:.6f}")
     >>> print(f"Difference: {abs(result - tensor_result):.2e}")
 
@@ -532,6 +529,8 @@ def U_stats_loop(tensors: List[np.ndarray], expression: List[List[int]]) -> floa
     - Only supports scalar-valued U-statistics
     - No backend support or GPU acceleration
     """
+    if isinstance(expression, str):
+        expression, _ = einsum_eq_to_strlist(expression)
     num_tensors = len(tensors)
     sample_size = tensors[0].shape[0]
     expression = standardize_indices(expression)

@@ -4,16 +4,29 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "u-stats"
-version = "0.6.1"
+version = "0.7.3"
 authors = [
-    {name = "Zhang Ruiqi"}
+    {name = "Ruiqi Zhang", email = "zrq1706@outlook.com"}
 ]
 description = "A Python package for U-Statistics calculation"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.11"
+keywords = ["statistics", "u-statistics", "v-statistics", "tensor", "numpy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
-    "numpy",
-    "opt_einsum"
+    "numpy>=1.20.0",
+    "opt_einsum>=3.3.0"
 ]
 
 [project.optional-dependencies]
@@ -21,6 +34,20 @@ test = [
     "pytest>=7.0",
     "pytest-cov",
 ]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "mypy",
+    "black",
+    "flake8",
+    "isort",
+]
+
+[project.urls]
+Homepage = "https://github.com/Amedar-Asterisk/U-Statistics-python"
+Repository = "https://github.com/Amedar-Asterisk/U-Statistics-python"
+Documentation = "https://github.com/Amedar-Asterisk/U-Statistics-python"
+"Bug Tracker" = "https://github.com/Amedar-Asterisk/U-Statistics-python/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -29,14 +56,61 @@ addopts = "-ra -q"
 
 [tool.coverage.run]
 source = ["src"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+
+[[tool.mypy.overrides]]
+module = [
+    "numpy.*",
+    "opt_einsum.*",
+    "torch.*",
+]
+ignore_missing_imports = true
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 tag_format = "$version"
 version_scheme = "semver"
-version = "0.6.1"
+version = "0.7.3"
 version_files = [
     "pyproject.toml:version",
-    "src/U_stats/__init__.py:__version__",
+    "src/u_stats/__init__.py:__version__",
+    "README.md:version = \\{(.*)\\}",
 ]
 update_changelog_on_bump = true
 major_version_zero = true
