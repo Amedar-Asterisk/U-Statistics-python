@@ -80,7 +80,7 @@ $$
 as an example. For samples $X = (X_1, \dots, X_n)$, the U-statistic takes the form 
 
 $$
-U = \frac{1}{n(n-1)\cdots (n-6)} \sum_{(i_1,\dots,i_7) \in \mathcal{P}_7} \prod_{k=1}^{6} h_k[i_k,\, i_{k+1}]
+U = \frac{1}{n(n-1)\cdots (n-6)} \sum_{(i_1,\dots,i_7) \in \mathcal{P}_7}h_1(X_{i_1},X_{i_2})\cdots h_6(X_{i_6},X_{i_7})
 $$
 
 where $\mathcal{P}_7$ denotes all 7-tuples of distinct indices.
