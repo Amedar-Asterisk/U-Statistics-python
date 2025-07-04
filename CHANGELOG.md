@@ -1,3 +1,53 @@
+## 0.7.3 (2025-07-04)
+
+### Fix
+
+- allow string input for expression parameter in U_stats_loop function
+- improve formatting and readability of backend documentation in _backend.py
+- update citation section in README.md to be commented out and adjust version reference format in pyproject.toml
+
+## 0.7.2 (2025-07-04)
+
+### Fix
+
+- update citation section in README.md to be commented out and adjust version reference format in pyproject.toml
+
+### Refactor
+
+- **readme-changelog**: add description in changelog, update version in readme
+
+## 0.7.1 (2025-07-04)
+
+### Fix
+
+- update version reference format in README.md for consistency
+
+### Enhance
+
+- Updated docstrings in _convert.py to provide clearer descriptions of conversion utilities, including examples and usage notes for functions like numbers_to_letters, standardize_indices, strlist_to_einsum_eq, and einsum_eq_to_strlist.
+- Improved parameter descriptions in UStats and VStats classes to clarify input tensor requirements, emphasizing compatibility with both np.ndarray and torch.Tensor.
+- Removed redundant comments and ensured consistency in terminology across the documentation.
+
+### feat
+- improve conversion utilities with detailed docstrings and examples
+
+### refactor: 
+- update UStats class parameter type to include torch.Tensor
+
+## 0.7.0 (2025-07-04)
+
+### Feat
+
+- enhance pyproject.toml and README for U-Statistics package; add metadata, dependencies, and detailed documentation
+
+### Fix
+
+- convert tensors to backend tensor format in UStats class
+
+### Refactor
+
+- rename calculate methods to compute in UStats and VStats classes
+
 ## 0.6.1 (2025-07-01)
 
 ### Fix

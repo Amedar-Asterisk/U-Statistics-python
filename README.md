@@ -28,7 +28,6 @@ Install the package from PyPI:
 ```bash
 pip install u-stats
 ```
-
 For development installation:
 
 ```bash
@@ -282,5 +281,6 @@ For questions or discussions, feel free to open an issue or reach out to the mai
   url={https://github.com/Amedar-Asterisk/U-Statistics-python},
   version={0.6.1},
   year={2024}
+
 }
 ``` -->
