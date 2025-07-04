@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "u-stats"
-version = "0.7.1"
+version = "0.7.2"
 authors = [
     {name = "Ruiqi Zhang", email = "zrq1706@outlook.com"}
 ]
@@ -106,7 +106,7 @@ ignore_missing_imports = true
 name = "cz_conventional_commits"
 tag_format = "$version"
 version_scheme = "semver"
-version = "0.7.1"
+version = "0.7.2"
 version_files = [
     "pyproject.toml:version",
     "src/u_stats/__init__.py:__version__",

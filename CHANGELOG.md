@@ -1,3 +1,13 @@
+## 0.7.2 (2025-07-04)
+
+### Fix
+
+- update citation section in README.md to be commented out and adjust version reference format in pyproject.toml
+
+### Refactor
+
+- **readme-changelog**: add description in changelog, update version in readme
+
 ## 0.7.1 (2025-07-04)
 
 ### Fix
