@@ -1,5 +1,5 @@
 # U-Statistics-python `u-stats`
-[![PyPI version](https://badge.fury.io/py/u-stat.svg)](https://badge.fury.io/py/u-stats)
+[![PyPI version](https://badge.fury.io/py/u-statsss.svg)](https://badge.fury.io/py/u-stats)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Style Status](https://img.shields.io/github/actions/workflow/status/Amedar-Asterisk/U-Statistics-python/style_check.yml?branch=main&label=Style)](https://github.com/Amedar-Asterisk/U-Statistics-python/actions)
