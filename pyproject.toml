@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "u-stats"
-version = "0.7.5"
+version = "0.7.6"
 authors = [
     {name = "Ruiqi Zhang", email = "zrq1706@outlook.com"}
 ]
@@ -46,7 +46,6 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/Amedar-Asterisk/U-Statistics-python"
 Repository = "https://github.com/Amedar-Asterisk/U-Statistics-python"
-Documentation = "https://github.com/Amedar-Asterisk/U-Statistics-python"
 "Bug Tracker" = "https://github.com/Amedar-Asterisk/U-Statistics-python/issues"
 
 [tool.pytest.ini_options]
@@ -106,7 +105,7 @@ ignore_missing_imports = true
 name = "cz_conventional_commits"
 tag_format = "$version"
 version_scheme = "semver"
-version = "0.7.5"
+version = "0.7.6"
 version_files = [
     "pyproject.toml:version",
     "src/u_stats/__init__.py:__version__",

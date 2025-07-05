@@ -1,3 +1,13 @@
+## 0.7.6 (2025-07-05)
+
+### Fix
+
+- pypi svg in README.md
+
+### Refactor
+
+- change icon of workflow in readme
+
 ## 0.7.5 (2025-07-04)
 
 ### Fix
