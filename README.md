@@ -187,6 +187,11 @@ Compute V-statistics from input tensors.
 
 **Returns:** Computed V-statistic value
 
+#### `u_stats_loop(tensors, expression)`
+Reference implementation using explicit loops (for validation and small computations).
+
+**Note:** This class is primarily for testing and educational purposes. Use `ustats` for production code.
+
 #### `set_backend(backend_name)`
 Set the tensor computation backend.
 
@@ -230,11 +235,6 @@ complexity = ustats_obj.complexity_analysis()
 Class-based interface for V-statistics computation with advanced features.
 
 **Parameters and Methods:** Same as `UStats`
-
-#### `u_stats_loop(tensors, expression)`
-Reference implementation using explicit loops (for validation and small computations).
-
-**Note:** This class is primarily for testing and educational purposes. Use `UStats` for production code.
 
 ## 5. Changelog
 
