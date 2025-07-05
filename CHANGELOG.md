@@ -1,6 +1,6 @@
 ## 0.7.6 (2025-07-05)
 
-### Fix
+### Doc
 
 - pypi svg in README.md
 
