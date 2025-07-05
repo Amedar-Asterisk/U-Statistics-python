@@ -190,7 +190,7 @@ Compute V-statistics from input tensors.
 #### `u_stats_loop(tensors, expression)`
 Reference implementation using explicit loops (for validation and small computations).
 
-**Note:** This class is primarily for testing and educational purposes. Use `ustats` for production code.
+**Note:** This function is primarily for testing and educational purposes. Use `ustats` for production code.
 
 #### `set_backend(backend_name)`
 Set the tensor computation backend.
