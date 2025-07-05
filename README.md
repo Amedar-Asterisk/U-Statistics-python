@@ -2,7 +2,7 @@
 [![PyPI version](https://badge.fury.io/py/u-stat.svg)](https://badge.fury.io/py/u-stats)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Amedar-Asterisk/U-Statistics-python/style_check.yml?branch=main)](https://github.com/Amedar-Asterisk/U-Statistics-python/actions)
+[![Style Status](https://img.shields.io/github/actions/workflow/status/Amedar-Asterisk/U-Statistics-python/style_check.yml?branch=main)](https://github.com/Amedar-Asterisk/U-Statistics-python/actions)
 
 **U-statistics** are fundamental tools in statistics, probability theory, theoretical computer science, economics, statistical physics, and machine learning. Named after Wassily Hoeffding, U-statistics provide unbiased estimators for population parameters and form the foundation for many statistical tests and methods. However, computing U-statistics can be computationally demanding, especially for high-order cases where the number of combinations grows exponentially.
 
