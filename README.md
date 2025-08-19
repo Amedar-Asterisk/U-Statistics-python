@@ -15,7 +15,7 @@ If you find this library useful in your research, please consider citing our pap
 
 - Title: On computing and the complexity of computing higher-order U-statistics, exactly
 - Authors: Xingyu Chen, Ruiqi Zhang And Lin Liu
-- url: https://arxiv.org/abs/2508.12627
+- Url: https://arxiv.org/abs/2508.12627
 
 ```bibtex
 @article{CZL2025,
