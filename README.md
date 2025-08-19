@@ -8,8 +8,24 @@
 
 This package provides a high-performance, tensor-based implementation for computing U-statistics and V-statistics with significant computational advantages:
 
-- Leverages the underlying combinatorial structure of kernel functions to significantly reduce computational complexity in many cases
+- Leverages the underlying structure of kernel functions to significantly reduce computational complexity in many cases
 - Utilizes optimized einsum engines—[`numpy.einsum`](https://numpy.org/doc/stable/reference/generated/numpy.einsum.html) and [`torch.einsum`](https://pytorch.org/docs/stable/generated/torch.einsum.html)—to enable efficient computation on both CPU and GPU
+
+If you find this library useful in your research, please consider citing our paper:
+Title: On computing and the complexity of computing higher-order U-statistics, exactly
+Authors: Xingyu Chen, Ruiqi Zhang And Lin Liu
+url: https://arxiv.org/abs/2508.12627
+```bibtex
+@misc{chen2025computing,
+  title        = {On computing and the complexity of computing higher-order $U$-statistics, exactly},
+  author       = {Xingyu Chen and Ruiqi Zhang and Lin Liu},
+  year         = {2025},
+  archivePrefix= {arXiv},
+  eprint       = {2508.12627},
+  primaryClass = {stat.ML},
+  doi          = {10.48550/arXiv.2508.12627},
+  url          = {https://arxiv.org/abs/2508.12627},
+}
 
 ## Table of Contents
 
