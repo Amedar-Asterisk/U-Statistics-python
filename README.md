@@ -16,7 +16,7 @@ Title: On computing and the complexity of computing higher-order U-statistics, e
 Authors: Xingyu Chen, Ruiqi Zhang And Lin Liu
 url: https://arxiv.org/abs/2508.12627
 ```bibtex
-@misc{chen2025computing,
+@misc{CZL2025computingU,
   title        = {On computing and the complexity of computing higher-order $U$-statistics, exactly},
   author       = {Xingyu Chen and Ruiqi Zhang and Lin Liu},
   year         = {2025},
@@ -26,7 +26,7 @@ url: https://arxiv.org/abs/2508.12627
   doi          = {10.48550/arXiv.2508.12627},
   url          = {https://arxiv.org/abs/2508.12627},
 }
-
+```
 ## Table of Contents
 
 1. [Installation](#1-installation)
