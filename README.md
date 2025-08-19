@@ -12,11 +12,13 @@ This package provides a high-performance, tensor-based implementation for comput
 - Utilizes optimized einsum engines—[`numpy.einsum`](https://numpy.org/doc/stable/reference/generated/numpy.einsum.html) and [`torch.einsum`](https://pytorch.org/docs/stable/generated/torch.einsum.html)—to enable efficient computation on both CPU and GPU
 
 If you find this library useful in your research, please consider citing our paper:
-Title: On computing and the complexity of computing higher-order U-statistics, exactly
-Authors: Xingyu Chen, Ruiqi Zhang And Lin Liu
-url: https://arxiv.org/abs/2508.12627
+
+- Title: On computing and the complexity of computing higher-order U-statistics, exactly
+- Authors: Xingyu Chen, Ruiqi Zhang And Lin Liu
+- url: https://arxiv.org/abs/2508.12627
+
 ```bibtex
-@misc{CZL2025computingU,
+@article{CZL2025computingU,
   title        = {On computing and the complexity of computing higher-order $U$-statistics, exactly},
   author       = {Xingyu Chen and Ruiqi Zhang and Lin Liu},
   year         = {2025},
@@ -27,6 +29,7 @@ url: https://arxiv.org/abs/2508.12627
   url          = {https://arxiv.org/abs/2508.12627},
 }
 ```
+
 ## Table of Contents
 
 1. [Installation](#1-installation)
