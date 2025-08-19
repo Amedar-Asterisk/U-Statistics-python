@@ -18,7 +18,7 @@ If you find this library useful in your research, please consider citing our pap
 - url: https://arxiv.org/abs/2508.12627
 
 ```bibtex
-@article{CZL2025computingU,
+@article{CZL2025,
   title        = {On computing and the complexity of computing higher-order $U$-statistics, exactly},
   author       = {Xingyu Chen and Ruiqi Zhang and Lin Liu},
   year         = {2025},
